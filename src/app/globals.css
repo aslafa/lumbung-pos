@@ -1,26 +1,39 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-brand-coffee: #4A2E18;
+  --color-brand-coffee-dark: #2C1810;
+  --color-brand-coffee-light: #6B4423;
+  --color-brand-cream: #FAF7F2;
+  --color-brand-cream-card: #FFFFFF;
+  --color-brand-cream-muted: #F3EDE2;
+  --color-brand-amber: #D97706;
+  --color-brand-amber-hover: #B45309;
+  --color-brand-border: #E8DFD3;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-brand-cream);
+  color: #1C1917;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  min-height: 100vh;
+}
+
+/* Custom scrollbars for clean POS look */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F3EDE2;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D6C7B2;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #6B4423;
 }
