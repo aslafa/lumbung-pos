@@ -1,6 +1,24 @@
 import { getUserProfile } from '@/lib/auth/get-user-profile';
+import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
+import { ShiftCabangClient, ShiftCabangItem } from './shift-cabang-client';
+import { formatRentangWaktuShift } from '@/lib/utils/format';
 
+export const instant = false;
+
+interface RawShiftCabangRow {
+  id: string;
+  cabang_id: string;
+  status: 'buka' | 'ditutup' | 'diverifikasi';
+  dibuka_pada: string;
+  ditutup_pada: string | null;
+  kas_awal: number;
+  kas_seharusnya: number;
+  uang_fisik: number | null;
+  selisih: number | null;
+  kasir?: { nama_lengkap: string } | null;
+  cabang?: { nama: string; kode: string } | null;
+}
 
 export default async function ShiftCabangPage() {
   const { profile } = await getUserProfile();
@@ -9,125 +27,58 @@ export default async function ShiftCabangPage() {
     redirect('/login');
   }
 
-  // Kasir dilarang
+  // Kasir dilarang mengakses pengawasan shift cabang
   if (profile.peran === 'kasir') {
     redirect('/kasir');
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="border-b border-[#E8DFD3] pb-4">
-        <h1 className="text-xl font-bold text-[#2C1810]">Pengawasan Shift Cabang</h1>
-        <p className="text-xs text-[#78716C] mt-0.5">
-          Periksa rekonsiliasi kas kasir dan lakukan verifikasi shift (BR-09 & BR-10)
-        </p>
-      </div>
+  const isOwner = profile.peran === 'owner';
+  const supabase = await createClient();
 
-      <div className="bg-white border border-[#E8DFD3] rounded-2xl shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-[#FAF7F2] border-b border-[#E8DFD3] text-[#78716C] uppercase font-semibold">
-              <tr>
-                <th className="px-4 py-3">Kasir</th>
-                <th className="px-4 py-3">Waktu Buka / Tutup</th>
-                <th className="px-4 py-3">Kas Awal</th>
-                <th className="px-4 py-3">Kas Seharusnya</th>
-                <th className="px-4 py-3">Uang Fisik</th>
-                <th className="px-4 py-3">Selisih Kas</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3 text-right">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#F3EDE2] text-[#2C1810]">
-              {[
-                {
-                  kasir: 'Dimas Arya',
-                  waktu: '15 Okt 07:00 - sekarang',
-                  awal: 200000,
-                  seharusnya: 1050000,
-                  fisik: null,
-                  selisih: null,
-                  status: 'buka',
-                },
-                {
-                  kasir: 'Putri Maharani',
-                  waktu: '14 Okt 07:00 - 15:30',
-                  awal: 150000,
-                  seharusnya: 940000,
-                  fisik: 940000,
-                  selisih: 0,
-                  status: 'ditutup',
-                },
-                {
-                  kasir: 'Dimas Arya',
-                  waktu: '11 Okt 07:00 - 15:30',
-                  awal: 200000,
-                  seharusnya: 1120000,
-                  fisik: 1085000,
-                  selisih: -35000,
-                  status: 'diverifikasi',
-                },
-              ].map((shift, idx) => (
-                <tr key={idx} className="hover:bg-[#FAF7F2]/60 transition-colors">
-                  <td className="px-4 py-3 font-bold text-[#4A2E18]">{shift.kasir}</td>
-                  <td className="px-4 py-3 text-[#78716C]">{shift.waktu}</td>
-                  <td className="px-4 py-3">Rp{shift.awal.toLocaleString('id-ID')}</td>
-                  <td className="px-4 py-3 font-semibold">
-                    Rp{shift.seharusnya.toLocaleString('id-ID')}
-                  </td>
-                  <td className="px-4 py-3">
-                    {shift.fisik !== null
-                      ? `Rp${shift.fisik.toLocaleString('id-ID')}`
-                      : '-'}
-                  </td>
-                  <td className="px-4 py-3">
-                    {shift.selisih !== null ? (
-                      <span
-                        className={`font-semibold ${
-                          Math.abs(shift.selisih) > 20000
-                            ? 'text-red-600 font-bold'
-                            : 'text-stone-700'
-                        }`}
-                      >
-                        {shift.selisih === 0
-                          ? 'Rp0 (Cocok)'
-                          : `Rp${shift.selisih.toLocaleString('id-ID')}`}
-                      </span>
-                    ) : (
-                      '-'
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${
-                        shift.status === 'buka'
-                          ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                          : shift.status === 'ditutup'
-                          ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                          : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                      }`}
-                    >
-                      {shift.status.toUpperCase()}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    {shift.status === 'ditutup' ? (
-                      <button
-                        disabled
-                        className="px-2.5 py-1 bg-[#4A2E18] text-white text-[11px] font-semibold rounded-lg shadow-xs opacity-70 cursor-not-allowed"
-                      >
-                        Verifikasi
-                      </button>
-                    ) : (
-                      <span className="text-[11px] text-[#A8A29E] italic">Terkunci</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+  // Query daftar cabang untuk filter Owner
+  const { data: cabangRaw } = await supabase
+    .from('cabang')
+    .select('id, nama, kode')
+    .eq('aktif', true)
+    .order('nama', { ascending: true });
+
+  const cabangList = cabangRaw || [];
+
+  // Query shift cabang dari database
+  // - Kepala Toko: hanya melihat shift di cabangnya
+  // - Owner: melihat seluruh shift semua cabang
+  let query = supabase
+    .from('shift_kasir')
+    .select('id, cabang_id, status, dibuka_pada, ditutup_pada, kas_awal, kas_seharusnya, uang_fisik, selisih, kasir:kasir_id(nama_lengkap), cabang:cabang_id(nama, kode)')
+    .order('dibuka_pada', { ascending: false });
+
+  if (!isOwner && profile.cabang_id) {
+    query = query.eq('cabang_id', profile.cabang_id);
+  }
+
+  const { data: shiftRaw } = await query;
+
+  const shiftList: ShiftCabangItem[] = ((shiftRaw as unknown as RawShiftCabangRow[]) || []).map((s: RawShiftCabangRow) => {
+    return {
+      id: s.id,
+      kasir_nama: s.kasir?.nama_lengkap || 'Kasir',
+      cabang_id: s.cabang_id,
+      cabang_nama: s.cabang?.nama || 'Cabang',
+      waktu: formatRentangWaktuShift(s.dibuka_pada, s.ditutup_pada),
+      awal: s.kas_awal,
+      seharusnya: s.kas_seharusnya,
+      fisik: s.uang_fisik,
+      selisih: s.selisih,
+      status: s.status,
+    };
+  });
+
+  return (
+    <ShiftCabangClient
+      initialShifts={shiftList}
+      cabangList={cabangList}
+      userRole={profile.peran}
+      userCabangNama={profile.cabang?.nama}
+    />
   );
 }

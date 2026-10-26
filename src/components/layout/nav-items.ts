@@ -7,6 +7,8 @@ import {
   Package,
   BarChart3,
   Settings,
+  ChefHat,
+  LayoutGrid,
   LucideIcon,
 } from 'lucide-react';
 import { UserRole } from '@/types/database';
@@ -26,10 +28,22 @@ export const ALL_NAV_ITEMS: NavItem[] = [
     roles: ['kasir', 'owner'],
   },
   {
+    label: 'Denah & Meja',
+    href: '/meja',
+    icon: LayoutGrid,
+    roles: ['kasir', 'kepala_toko', 'owner'],
+  },
+  {
+    label: 'Antrean & KDS',
+    href: '/antrean',
+    icon: ChefHat,
+    roles: ['kasir', 'kepala_toko', 'owner'],
+  },
+  {
     label: 'Shift Saya',
     href: '/shift-saya',
     icon: Clock,
-    roles: ['kasir', 'owner'],
+    roles: ['kasir'],
   },
   {
     label: 'Transaksi',

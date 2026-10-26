@@ -40,3 +40,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Temporary audit files
+/scratch/
+
+# Supabase local temporary files
+/supabase/.temp/

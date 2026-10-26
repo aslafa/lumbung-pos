@@ -1,6 +1,39 @@
 import { getUserProfile } from '@/lib/auth/get-user-profile';
+import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-import { TrendingUp, DollarSign, Receipt, Lock } from 'lucide-react';
+import { LaporanClient, LaporanTxItem, TopProductItem, LaporanShiftItem } from './laporan-client';
+
+export const instant = false;
+
+interface RawTxRow {
+  id: string;
+  total: number;
+  metode_bayar: string;
+  dibuat_pada: string;
+  cabang_id: string;
+  cabang?: { nama: string; kode: string } | null;
+}
+
+interface RawShiftRow {
+  id: string;
+  cabang_id: string;
+  cabang?: { nama: string; kode: string } | null;
+  kasir?: { nama_lengkap: string } | null;
+  dibuka_pada: string;
+  ditutup_pada: string | null;
+  status: string;
+  kas_awal: number;
+  kas_seharusnya: number;
+  uang_fisik: number | null;
+  selisih: number | null;
+  catatan_tutup: string | null;
+}
+
+interface RawTxItemRow {
+  jumlah: number;
+  subtotal: number;
+  produk?: { nama: string; kategori: string } | null;
+}
 
 export default async function LaporanPage() {
   const { profile } = await getUserProfile();
@@ -9,108 +42,148 @@ export default async function LaporanPage() {
     redirect('/login');
   }
 
-  // Kasir dilarang (BR-01)
+  // Kasir dilarang mengakses laporan
   if (profile.peran === 'kasir') {
     redirect('/kasir');
   }
 
   const isOwner = profile.peran === 'owner';
+  const supabase = await createClient();
+
+  // 1. Query seluruh cabang (untuk filter Owner)
+  const { data: cabangRaw } = await supabase
+    .from('cabang')
+    .select('id, nama, kode')
+    .eq('aktif', true)
+    .order('nama', { ascending: true });
+
+  const cabangList = cabangRaw || [];
+
+  // 2. Query transaksi berstatus 'lunas' (BR-04, BR-11)
+  let txQuery = supabase
+    .from('transaksi')
+    .select('id, total, metode_bayar, dibuat_pada, cabang_id, cabang:cabang_id(nama, kode)')
+    .eq('status', 'lunas')
+    .order('dibuat_pada', { ascending: false });
+
+  if (!isOwner && profile.cabang_id) {
+    txQuery = txQuery.eq('cabang_id', profile.cabang_id);
+  }
+
+  const { data: transaksiRaw } = await txQuery;
+
+  const transaksiList: LaporanTxItem[] = ((transaksiRaw as unknown as RawTxRow[]) || []).map((t) => ({
+    id: t.id,
+    total: t.total,
+    metode_bayar: t.metode_bayar,
+    dibuat_pada: t.dibuat_pada,
+    cabang_id: t.cabang_id,
+    cabang_nama: t.cabang?.nama || 'Cabang',
+  }));
+
+  // 2b. Query count transaksi void (PRD Bagian 9)
+  let voidQuery = supabase
+    .from('transaksi')
+    .select('id', { count: 'exact', head: true })
+    .eq('status', 'void');
+
+  if (!isOwner && profile.cabang_id) {
+    voidQuery = voidQuery.eq('cabang_id', profile.cabang_id);
+  }
+  const { count: voidCount } = await voidQuery;
+
+  // 2c. Query data shift untuk tabel selisih kas per shift (PRD Bagian 9)
+  let shiftQuery = supabase
+    .from('shift_kasir')
+    .select('id, cabang_id, cabang:cabang_id(nama, kode), kasir:kasir_id(nama_lengkap), dibuka_pada, ditutup_pada, status, kas_awal, kas_seharusnya, uang_fisik, selisih, catatan_tutup')
+    .in('status', ['ditutup', 'diverifikasi'])
+    .order('dibuka_pada', { ascending: false })
+    .limit(25);
+
+  if (!isOwner && profile.cabang_id) {
+    shiftQuery = shiftQuery.eq('cabang_id', profile.cabang_id);
+  }
+  const { data: shiftRaw } = await shiftQuery;
+
+  const shiftSelisihList: LaporanShiftItem[] = ((shiftRaw as unknown as RawShiftRow[]) || []).map((s) => ({
+    id: s.id,
+    cabang_id: s.cabang_id,
+    cabang_nama: s.cabang?.nama || 'Cabang',
+    cabang_kode: s.cabang?.kode || 'CAB',
+    kasir_nama: s.kasir?.nama_lengkap || 'Kasir',
+    dibuka_pada: s.dibuka_pada,
+    ditutup_pada: s.ditutup_pada,
+    status: s.status,
+    kas_awal: s.kas_awal,
+    kas_seharusnya: s.kas_seharusnya,
+    uang_fisik: s.uang_fisik,
+    selisih: s.selisih,
+    catatan_tutup: s.catatan_tutup,
+  }));
+
+  // 3. Query Top Products dari transaksi_item yang lunas
+  const { data: txItemRaw } = await supabase
+    .from('transaksi_item')
+    .select('jumlah, subtotal, produk:produk_id(nama, kategori)');
+
+  const productAggMap = new Map<string, { nama: string; kategori: string; total_qty: number; total_omzet: number }>();
+
+  ((txItemRaw as unknown as RawTxItemRow[]) || []).forEach((item) => {
+    const prodName = item.produk?.nama || 'Item Lainnya';
+    const prodCat = item.produk?.kategori || 'kopi';
+    const existing = productAggMap.get(prodName);
+    if (existing) {
+      existing.total_qty += item.jumlah || 0;
+      existing.total_omzet += item.subtotal || 0;
+    } else {
+      productAggMap.set(prodName, {
+        nama: prodName,
+        kategori: prodCat,
+        total_qty: item.jumlah || 0,
+        total_omzet: item.subtotal || 0,
+      });
+    }
+  });
+
+  const topProducts: TopProductItem[] = Array.from(productAggMap.values())
+    .sort((a, b) => b.total_qty - a.total_qty)
+    .slice(0, 10);
+
+  // 4. Khusus Owner: Ambil modal dari transaksi_item_modal (BR-11)
+  let totalModalOwner = 0;
+  if (isOwner && transaksiList.length > 0) {
+    const { data: modalList } = await supabase
+      .from('transaksi_item_modal')
+      .select('subtotal_modal');
+
+    totalModalOwner = (modalList || []).reduce((sum, m) => sum + (m.subtotal_modal || 0), 0);
+  }
+
+  // 5. Query jumlah stok kritis/habis
+  let stokQuery = supabase
+    .from('stok_cabang')
+    .select('jumlah, stok_minimum');
+
+  if (!isOwner && profile.cabang_id) {
+    stokQuery = stokQuery.eq('cabang_id', profile.cabang_id);
+  }
+
+  const { data: stokRaw } = await stokQuery;
+  const lowStockCount = (stokRaw || []).filter(
+    (s) => s.jumlah === 0 || s.jumlah <= s.stok_minimum
+  ).length;
 
   return (
-    <div className="space-y-6">
-      <div className="border-b border-[#E8DFD3] pb-4">
-        <h1 className="text-xl font-bold text-[#2C1810]">Laporan &amp; Analitik Penjualan</h1>
-        <p className="text-xs text-[#78716C] mt-0.5">
-          {isOwner
-            ? 'Ringkasan omzet, laba kotor, dan margin multi-cabang (1 - 14 Oktober 2026)'
-            : `Ringkasan penjualan harian cabang ${profile.cabang?.nama || ''}`}
-        </p>
-      </div>
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white border border-[#E8DFD3] rounded-2xl p-4 shadow-xs">
-          <div className="flex items-center justify-between text-xs text-[#78716C] mb-1">
-            <span>Total Omzet</span>
-            <DollarSign className="w-4 h-4 text-[#D97706]" />
-          </div>
-          <div className="text-lg sm:text-xl font-extrabold text-[#2C1810]">
-            Rp{isOwner ? '6.880.500' : '2.225.100'}
-          </div>
-          <span className="text-[10px] text-emerald-600 font-medium mt-1 inline-block">
-            Transaksi Lunas
-          </span>
-        </div>
-
-        <div className="bg-white border border-[#E8DFD3] rounded-2xl p-4 shadow-xs">
-          <div className="flex items-center justify-between text-xs text-[#78716C] mb-1">
-            <span>Total Transaksi</span>
-            <Receipt className="w-4 h-4 text-blue-600" />
-          </div>
-          <div className="text-lg sm:text-xl font-extrabold text-[#2C1810]">
-            {isOwner ? '60 Struk' : '20 Struk'}
-          </div>
-          <span className="text-[10px] text-[#A8A29E] mt-1 inline-block">
-            Rata-rata: Rp{isOwner ? '114.675' : '111.255'}
-          </span>
-        </div>
-
-        {/* Khusus Owner: Laba Kotor (BR-11) */}
-        {isOwner ? (
-          <>
-            <div className="bg-amber-50/60 border border-amber-200 rounded-2xl p-4 shadow-xs">
-              <div className="flex items-center justify-between text-xs text-amber-900 mb-1">
-                <span className="font-semibold">Laba Kotor (Owner)</span>
-                <TrendingUp className="w-4 h-4 text-[#D97706]" />
-              </div>
-              <div className="text-lg sm:text-xl font-extrabold text-[#4A2E18]">
-                Rp4.069.000
-              </div>
-              <span className="text-[10px] text-amber-700 font-medium mt-1 inline-block">
-                Total Modal: Rp2.811.500
-              </span>
-            </div>
-
-            <div className="bg-amber-50/60 border border-amber-200 rounded-2xl p-4 shadow-xs">
-              <div className="flex items-center justify-between text-xs text-amber-900 mb-1">
-                <span className="font-semibold">Margin Rata-rata</span>
-                <Lock className="w-3.5 h-3.5 text-amber-700" />
-              </div>
-              <div className="text-lg sm:text-xl font-extrabold text-[#4A2E18]">
-                59.1%
-              </div>
-              <span className="text-[10px] text-amber-700 font-medium mt-1 inline-block">
-                Data Rahasia (BR-11)
-              </span>
-            </div>
-          </>
-        ) : (
-          <div className="col-span-2 bg-stone-50 border border-dashed border-[#E8DFD3] rounded-2xl p-4 flex items-center justify-center text-xs text-[#A8A29E] italic">
-            Data harga modal &amp; laba hanya dapat diakses oleh Owner (BR-11)
-          </div>
-        )}
-      </div>
-
-      {/* Chart Placeholders */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white border border-[#E8DFD3] rounded-2xl p-5 shadow-xs">
-          <h2 className="text-sm font-bold text-[#2C1810] mb-4">
-            Penjualan Harian per Cabang (Rp)
-          </h2>
-          <div className="h-48 bg-[#FAF7F2] rounded-xl border border-dashed border-[#E8DFD3] flex items-center justify-center text-xs text-[#A8A29E]">
-            [Grafik Batang Penjualan Harian - Siap Terkoneksi Database di Tahap 6]
-          </div>
-        </div>
-
-        <div className="bg-white border border-[#E8DFD3] rounded-2xl p-5 shadow-xs">
-          <h2 className="text-sm font-bold text-[#2C1810] mb-4">
-            Komposisi Metode Pembayaran
-          </h2>
-          <div className="h-48 bg-[#FAF7F2] rounded-xl border border-dashed border-[#E8DFD3] flex items-center justify-center text-xs text-[#A8A29E]">
-            [Grafik Donut: Tunai vs QRIS - Siap Terkoneksi Database di Tahap 6]
-          </div>
-        </div>
-      </div>
-    </div>
+    <LaporanClient
+      transaksiList={transaksiList}
+      topProducts={topProducts}
+      cabangList={cabangList}
+      userRole={profile.peran}
+      userCabangNama={profile.cabang?.nama}
+      totalModalOwner={totalModalOwner}
+      lowStockCount={lowStockCount}
+      voidCount={voidCount || 0}
+      shiftSelisihList={shiftSelisihList}
+    />
   );
 }

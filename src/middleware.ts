@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { updateSession } from '@/lib/supabase/middleware';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -11,6 +12,11 @@ export async function middleware(request: NextRequest) {
     pathname.includes('.') ||
     pathname === '/favicon.ico'
   ) {
+    return NextResponse.next();
+  }
+
+  // Lewati Server Actions agar body stream tidak terputus (Error: Connection closed)
+  if (request.headers.has('next-action')) {
     return NextResponse.next();
   }
 
@@ -34,11 +40,25 @@ export async function middleware(request: NextRequest) {
     return supabaseResponse;
   }
 
-  const { data: profile } = await supabase
+  let { data: profile } = await supabase
     .from('profiles')
     .select('peran, aktif, cabang_id')
     .eq('id', user.id)
-    .single();
+    .maybeSingle();
+
+  if (!profile) {
+    const adminClient = createAdminClient();
+    if (adminClient) {
+      const { data: adminProfile } = await adminClient
+        .from('profiles')
+        .select('peran, aktif, cabang_id')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (adminProfile) {
+        profile = adminProfile;
+      }
+    }
+  }
 
   // Jika profile ditemukan tapi nonaktif (BR-01)
   if (profile && !profile.aktif) {
@@ -61,6 +81,12 @@ export async function middleware(request: NextRequest) {
 
   // 3. Jika sudah login dan mengakses /login atau root /
   if (isLoginPage || pathname === '/') {
+    // Jika profile belum ditemukan atau gagal dimuat, jangan redirect ke dashboard
+    // agar tidak terjadi redirect loop (karena dashboard akan me-redirect balik ke /login)
+    if (!profile) {
+      return supabaseResponse;
+    }
+
     const url = request.nextUrl.clone();
     if (role === 'kasir') {
       url.pathname = '/kasir';
@@ -76,8 +102,8 @@ export async function middleware(request: NextRequest) {
 
   // 4. Role Guard Matriks Akses Sesuai PRD
   if (role === 'kasir') {
-    // Kasir hanya boleh: /kasir, /shift-saya, /transaksi
-    const allowed = ['/kasir', '/shift-saya', '/transaksi'];
+    // Kasir berhak mengakses: /kasir, /meja, /antrean, /shift-saya, /transaksi
+    const allowed = ['/kasir', '/meja', '/antrean', '/shift-saya', '/transaksi'];
     const isAllowed = allowed.some((p) => pathname.startsWith(p));
     if (!isAllowed) {
       const url = request.nextUrl.clone();

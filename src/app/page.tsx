@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation';
 import { getUserProfile } from '@/lib/auth/get-user-profile';
 
+export const instant = false;
+
 export default async function HomePage() {
   const { user, profile, isInactive } = await getUserProfile();
 

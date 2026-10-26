@@ -11,7 +11,7 @@ export default function NonaktifPage() {
 
         <h1 className="text-xl font-bold text-[#2C1810]">Akun Dinonaktifkan</h1>
         <p className="text-sm text-[#78716C] mt-2 mb-6 leading-relaxed">
-          Akun Anda saat ini berstatus <span className="font-semibold text-red-600">nonaktif</span>. Sesuai aturan bisnis Lumbung POS (BR-01), akun nonaktif tidak diizinkan membuka data apa pun di dalam sistem.
+          Akun Anda saat ini berstatus <span className="font-semibold text-red-600">nonaktif</span>. Akun nonaktif tidak diizinkan membuka data apa pun di dalam sistem.
         </p>
 
         <div className="p-3.5 bg-[#FAF7F2] rounded-xl border border-[#E8DFD3] text-xs text-[#78716C] text-left mb-6 space-y-1">

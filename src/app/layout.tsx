@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { ThemeProvider } from '@/components/theme/ThemeProvider';
 
 export const metadata: Metadata = {
   title: 'Lumbung POS — Lumbung Kopi dan Roti',
@@ -21,9 +22,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="id" className="h-full antialiased">
-      <body className="min-h-full flex flex-col bg-[#FAF7F2] text-[#1C1917]">
-        {children}
+    <html lang="id" className="h-full antialiased" suppressHydrationWarning>
+      <body className="min-h-full flex flex-col bg-[#FAF7F2] text-[#1C1917] dark:bg-[#14110F] dark:text-[#FAF7F2] transition-colors duration-200">
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );

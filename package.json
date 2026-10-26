@@ -6,9 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "node --env-file=.env.local --experimental-strip-types --test --test-concurrency=1 tests/auth-account-status.test.ts tests/qris-mayar.test.ts tests/format.test.ts tests/order-flow-queue.test.ts tests/meja-management.test.ts tests/capstone-audit-full.test.ts tests/product-customization-and-variants.test.ts",
+    "test:order-flow": "npx tsx --test tests/order-flow-thorough.test.ts"
   },
   "dependencies": {
+    "@supabase/server": "^1.9.2",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.118.0",
     "lucide-react": "^1.61.0",
