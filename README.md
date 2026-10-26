@@ -11,14 +11,19 @@
    - [Fitur Tambahan (Value-Added)](#fitur-tambahan-value-added)
    - [Fitur yang Memerlukan Konfigurasi Eksternal](#fitur-yang-memerlukan-konfigurasi-eksternal)
 3. [Hak Akses Pengguna (Role-Based Access Control)](#hak-akses-pengguna-role-based-access-control)
-4. [Teknologi yang Digunakan](#teknologi-yang-digunakan)
-5. [Struktur Proyek](#struktur-proyek)
-6. [Persyaratan dan Instalasi Lokal](#persyaratan-dan-instalasi-lokal)
-7. [Konfigurasi Environment](#konfigurasi-environment)
-8. [Database dan Migrasi](#database-dan-migrasi)
-9. [Pengujian dan Kualitas Kode](#pengujian-dan-kualitas-kode)
-10. [Keamanan](#keamanan)
-11. [Lisensi](#lisensi)
+4. [Akun Uji Coba (Demo & Testing Credentials)](#akun-uji-coba-demo--testing-credentials)
+5. [Teknologi yang Digunakan](#teknologi-yang-digunakan)
+6. [Struktur Proyek](#struktur-proyek)
+7. [Cara Menjalankan Aplikasi](#cara-menjalankan-aplikasi)
+   - [Prasyarat Sistem](#prasyarat-sistem)
+   - [Langkah Instalasi dan Setup](#langkah-instalasi-dan-setup)
+   - [Perintah Menjalankan Aplikasi](#perintah-menjalankan-aplikasi)
+8. [Konfigurasi Environment](#konfigurasi-environment)
+9. [Database dan Migrasi](#database-dan-migrasi)
+10. [Catatan Keputusan Arsitektur & Teknis (ADR)](#catatan-keputusan-arsitektur--teknis-adr)
+11. [Pengujian dan Kualitas Kode](#pengujian-dan-kualitas-kode)
+12. [Keamanan](#keamanan)
+13. [Lisensi](#lisensi)
 
 ---
 
@@ -152,6 +157,26 @@ Penegakan hak akses diterapkan secara ketat pada tiga lapisan: navigasi UI, Next
 
 ---
 
+## Akun Uji Coba (Demo & Testing Credentials)
+
+Berikut adalah daftar 9 akun pengguna yang telah terkonfigurasi pada basis data Supabase untuk pengujian alur bisnis seluruh peran:
+
+> **Kata Sandi Standar untuk Seluruh Akun Uji:** `Latihan#2026`
+
+| Peran | Nama Staf | Email Login | Cabang Penugasan | Status | Tujuan / Skenario Pengujian |
+| :--- | :--- | :--- | :--- | :---: | :--- |
+| **Kasir** | Dimas Arya | `dimas.kasir.tebet@lumbung.test` | Lumbung Tebet (TBT) | **Aktif** | Alur utama kasir: buka shift, pesanan POS, pembayaran tunai/QRIS, tutup shift |
+| **Kasir** | Putri Maharani | `putri.kasir.tebet@lumbung.test` | Lumbung Tebet (TBT) | **Aktif** | Uji shift bergantian antar-kasir pada cabang yang sama |
+| **Kasir** | Fajar Nugroho | `fajar.kasir.bintaro@lumbung.test` | Lumbung Bintaro (BTR) | **Aktif** | Uji isolasi transaksi dan katalog stok Cabang Bintaro |
+| **Kasir** | Wulan Sari | `wulan.kasir.depok@lumbung.test` | Lumbung Depok (DPK) | **Aktif** | Uji isolasi transaksi dan antrean KDS Cabang Depok |
+| **Kasir** | Rizky Ramadhan | `rizky.kasir.depok@lumbung.test` | Lumbung Depok (DPK) | **Nonaktif** | **Kasus Uji Batas BR-01:** Verifikasi penolakan login dan pengalihan ke `/nonaktif` |
+| **Kepala Toko** | Bayu Prasetyo | `bayu.kt.tebet@lumbung.test` | Lumbung Tebet (TBT) | **Aktif** | Verifikasi shift kasir Tebet, void transaksi hari ini, mutasi stok cabang |
+| **Kepala Toko** | Sekar Ayuningtyas | `sekar.kt.bintaro@lumbung.test` | Lumbung Bintaro (BTR) | **Aktif** | Supervisi operasional dan verifikasi shift Cabang Bintaro |
+| **Kepala Toko** | Hendra Saputra | `hendra.kt.depok@lumbung.test` | Lumbung Depok (DPK) | **Aktif** | Supervisi operasional dan mutasi stok Cabang Depok |
+| **Owner** | Ratna Kusumawardani | `ratna.owner@lumbung.test` | **Semua Cabang** | **Aktif** | Akses laporan laba kotor konsolidasian, HPP/COGS, audit log, kelola produk & akun |
+
+---
+
 ## Teknologi yang Digunakan
 
 - **Framework Web:** [Next.js](https://nextjs.org/) versi 16.4.2 (App Router, Server Actions, Partial Prerendering, Turbopack).
@@ -219,46 +244,85 @@ lumbung-pos/
 
 ---
 
-## Persyaratan dan Instalasi Lokal
+## Cara Menjalankan Aplikasi
+
+Ikuti panduan langkah demi langkah berikut untuk menjalankan aplikasi Lumbung POS di lingkungan lokal Anda:
 
 ### Prasyarat Sistem
-- **Node.js:** Versi 20.x atau lebih baru (disarankan LTS v20/v22).
+- **Node.js:** Versi 20.x atau lebih baru (disarankan Node.js LTS v20 atau v22).
 - **npm:** Versi 10.x atau lebih baru.
-- **Akun Supabase:** Proyek Supabase aktif dengan ekstensi `pgcrypto` diaktifkan.
+- **Git:** Untuk kloning kode sumber.
+- **Proyek Supabase:** Akun Supabase aktif (Cloud maupun Supabase CLI lokal) dengan ekstensi `pgcrypto` aktif.
 
-### Langkah-Langkah Instalasi
+### Langkah Instalasi dan Setup
 
 1. **Clone Repository:**
    ```bash
-   git clone https://github.com/username/lumbung-pos.git
+   git clone https://github.com/aslafa/lumbung-pos.git
    cd lumbung-pos
    ```
 
-2. **Instal Dependensi:**
+2. **Instal Seluruh Dependensi:**
    ```bash
    npm install
    ```
 
-3. **Konfigurasi Environment Variable:**
+3. **Konfigurasi Berkas Environment:**
    Salin berkas `.env.local.example` menjadi `.env.local`:
    ```bash
    cp .env.local.example .env.local
    ```
-   Buka file `.env.local` dan masukkan kredensial proyek Supabase serta konfigurasi Mayar Anda (lihat panduan pada bagian [Konfigurasi Environment](#konfigurasi-environment)).
-
-4. **Terapkan Migrasi Database ke Supabase:**
-   Terapkan berkas-berkas migrasi SQL yang berada di dalam direktori `supabase/migrations/` secara berurutan pada SQL Editor Supabase Anda, dimulai dari `20261022000001_create_pos_schema_and_policies.sql` sampai migrasi terakhir.
-
-5. **Jalankan Server Pengembangan (Dev Server):**
-   ```bash
-   npm run dev
+   Buka berkas `.env.local` dan isi kredensial Supabase Anda:
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-publishable-key
+   SUPABASE_SERVICE_ROLE_KEY=your-supabase-secret-key
+   MAYAR_API_KEY=your-mayar-api-key
+   MAYAR_WEBHOOK_TOKEN=your-mayar-webhook-token
    ```
 
-6. **Buka Aplikasi di Browser:**
-   Akses aplikasi melalui peramban web pada alamat:
-   ```text
-   http://localhost:3000
-   ```
+4. **Terapkan Migrasi Database SQL ke Supabase:**
+   Jalankan seluruh 10 berkas migrasi SQL yang berada di direktori `supabase/migrations/` secara berurutan pada SQL Editor Supabase:
+   - `20261022000001_create_pos_schema_and_policies.sql` (Skema 9 tabel inti & RLS)
+   - `20261022000002_seed_initial_data.sql` (Seed cabang, produk, dan modal)
+   - `20261022000003_grant_permissions.sql` (Izin hak akses SQL)
+   - `20261022000004_fix_profiles_rls_for_inactive_users.sql` (RLS akun nonaktif)
+   - `20261022000005_import_historical_data.sql` (Data historis transaksi & shift)
+   - `20261022000006_add_mayar_qris_functions.sql` (Fungsi settlement Mayar)
+   - `20261023000001_add_table_management_and_kds_queue.sql` (Antrean pesanan KDS)
+   - `20261024000001_create_meja_and_areas.sql` (Tabel meja & denah area)
+   - `20261026000001_add_product_variants_and_order_fields.sql` (Varian Large Cup)
+   - `20261026000002_add_transaksi_order_and_table_columns.sql` (Kolom Dine In & Meja)
+
+### Perintah Menjalankan Aplikasi
+
+- **Menjalankan Server Pengembangan (Development Server):**
+  ```bash
+  npm run dev
+  ```
+  Buka peramban web pada alamat:
+  ```text
+  http://localhost:3000
+  ```
+  Masuk menggunakan salah satu akun pada tabel [Akun Uji Coba](#akun-uji-coba-demo--testing-credentials) (misal: Kasir Tebet `dimas.kasir.tebet@lumbung.test` dengan kata sandi `Latihan#2026`).
+
+- **Membangun & Menjalankan Mode Produksi (Production Build):**
+  ```bash
+  # 1. Kompilasi build Next.js
+  npm run build
+
+  # 2. Jalankan server produksi
+  npm run start
+  ```
+
+- **Menjalankan Seluruh Pengujian Otomatis:**
+  ```bash
+  # Menjalankan 64 test case unit & integrasi
+  npm test
+
+  # Menjalankan 7 test case alur pemesanan menyeluruh
+  npm run test:order-flow
+  ```
 
 ---
 
@@ -306,6 +370,40 @@ Sistem menggunakan database relasional PostgreSQL yang di-host pada Supabase. Se
    Menambahkan tabel `produk_varian` untuk mendukung varian ukuran minuman (Large Cup +Rp5.000) dan kolom kustomisasi produk.
 10. `20261026000002_add_transaksi_order_and_table_columns.sql`:  
     Menambahkan relasi kolom `tipe_pesanan`, `meja_id`, dan `nama_pelanggan` pada tabel `transaksi` untuk menjamin persistensi identitas pesanan makan di tempat.
+
+---
+
+## Catatan Keputusan Arsitektur & Teknis (ADR)
+
+Bagian ini mendokumentasikan keputusan arsitektur dan teknis kunci yang melandasi implementasi sistem Lumbung POS:
+
+### ADR-01: Penegakan Isolasi Multi-Cabang pada Lapisan Database (PostgreSQL RLS)
+- **Konteks:** Sistem melayani beberapa cabang kedai yang beroperasi secara independen. Keamanan data tidak boleh hanya bergantung pada logika filter frontend atau middleware.
+- **Keputusan:** Menerapkan Row Level Security (RLS) pada PostgreSQL dengan fungsi helper sesi `auth_user_cabang_id()` dan `auth_user_role()`. Kasir dan Kepala Toko dibatasi secara mutlak pada `cabang_id` mereka. Percobaan query lintas cabang melalui Supabase Client secara otomatis menghasilkan data kosong (*zero rows*).
+
+### ADR-02: Kerahasiaan Absolut Harga Pokok Penjualan (HPP) & Margin Laba
+- **Konteks:** Persyaratan BR-11 melarang staf operasional cabang (Kasir & Kepala Toko) mengetahui harga modal bahan baku dan margin laba bersih kedai.
+- **Keputusan:** Tabel `riwayat_harga_modal` dan `transaksi_item_modal` dipisahkan secara skema dan dilindungi RLS khusus role `owner`. Query ke tabel modal pada halaman `/laporan` hanya dipanggil di server jika pengguna terverifikasi sebagai Owner.
+
+### ADR-03: Validasi Stok Atomik dengan Penguncian Baris (`FOR UPDATE`)
+- **Konteks:** Pada jam sibuk kedai kopi, kasir di kasir yang berbeda dapat menjual produk yang sama secara simultan, berpotensi memicu *race condition* dan stok minus.
+- **Keputusan:** Eksekusi transaksi penjualan menggunakan transaksi atomik database dengan klausa `SELECT jumlah FROM stok_cabang WHERE ... FOR UPDATE`. Jika salah satu item dalam keranjang tidak mencukupi, seluruh transaksi dibatalkan (*all-or-nothing*) dan stok item lain tidak terpotong sebagian (*zero partial sales*). Skema tabel juga diperkuat dengan check constraint `jumlah >= 0`.
+
+### ADR-04: Penomoran Struk Transaksi Urut Harian (Format BR-04)
+- **Konteks:** Struk transaksi wajib memiliki format standar `[KODE_CABANG]-[YYYYMMDD]-[0001..]` yang urut per cabang dan tanggal, serta tidak terduplikasi saat ada request bersamaan.
+- **Keputusan:** Menggunakan kolom penghitung `urut_struk_terakhir` dan `urut_struk_tanggal` pada tabel `cabang` dengan row-locking `FOR UPDATE` saat transaksi dibuat. Jika hari berganti, counter otomatis di-reset ke 1. Transaksi yang dibatalkan (*void*) tetap mempertahankan nomor struknya agar jejak audit keuangan tidak terputus.
+
+### ADR-05: State Machine Siklus Hidup Shift Kasir Searah
+- **Konteks:** Rekonsiliasi kas kasir menuntut alur status yang tertib dan tidak dapat dibalik secara sepihak untuk mencegah manipulasi selisih kas.
+- **Keputusan:** Status shift kasir mengikuti siklus satu arah: `buka` $\rightarrow$ `ditutup` $\rightarrow$ `diverifikasi`. Kasir dibatasi hanya memiliki tepat 1 shift buka melalui partial unique index `idx_shift_kasir_satu_buka`. Penutupan shift menghitung kas sistem otomatis, dan check constraint database mewajibkan pengisian catatan penjelasan jika $|selisih| > \text{Rp20.000}$. Verifikasi shift hanya dapat disetujui oleh Kepala Toko cabang terkait atau Owner.
+
+### ADR-06: Integrasi QRIS Mayar v2 dengan Proteksi Amount Mismatch & Idempotensi
+- **Konteks:** Pembayaran QRIS non-tunai melalui gateway rentan terhadap pembayaran nominal yang tidak sesuai, notifikasi webhook ganda (*replay*), atau keterlambatan jaringan.
+- **Keputusan:** Menggunakan alur pembuatan invoice dinamis Mayar API v2 dengan status awal `menunggu_bayar`. Endpoint webhook memvalidasi signature/token dan menyimpan payload pada tabel `mayar_webhook_events`. Logika pelunasan menolak pembayaran jika nominal gateway tidak cocok dengan total transaksi (`AMOUNT_MISMATCH`) dan mengembalikan respon sukses yang aman jika webhook untuk invoice yang sama diterima berulang kali (*idempotent*).
+
+### ADR-07: Pemisahan State Operasional Denah Meja & Antrean KDS dari Finansial Transaksi
+- **Konteks:** Barista dan staf dapur perlu memperbarui tahapan penyajian pesanan kopi tanpa mengubah status finansial transaksi yang telah lunas.
+- **Keputusan:** Tabel `antrean_pesanan` dan `meja` dirancang terpisah dari tabel `transaksi`. Status pengerjaan pesanan (`menunggu` $\rightarrow$ `diproses` $\rightarrow$ `siap` $\rightarrow$ `selesai`) dapat dimutasi secara independen oleh barista melalui layar KDS tanpa mengganggu integritas status pembayaran `lunas` pada pembukuan kasir.
 
 ---
 
