@@ -1,6 +1,6 @@
 # Lumbung Kopi dan Roti — Sistem Point of Sale (POS) Multi-Cabang
 
-Sistem kasir modern berbasis web yang dirancang khusus untuk memenuhi kebutuhan operasional multi-cabang kedai kopi dan roti **Lumbung Kopi dan Roti**. Aplikasi ini mencakup pencatatan penjualan kasir, pemantauan stok real-time, manajemen shift kasir dengan rekonsiliasi kas, manajemen meja dan antrean dapur (Kitchen Display System), pembayaran tunai maupun QRIS dinamis, serta laporan analitik laba rugi konsolidasian.
+**Lumbung POS** adalah platform sistem kasir (*Point of Sale*) multi-cabang modern yang dirancang untuk mendukung operasional terpadu kedai kopi dan roti **Lumbung Kopi dan Roti**. Sistem ini mengintegrasikan seluruh alur bisnis dari hulu ke hilir: mulai dari transaksi kasir berkecepatan tinggi, kustomisasi varian menu, manajemen meja *Dine In*, antrean pesanan dapur secara *real-time* (Kitchen Display System), pembukuan shift dan rekonsiliasi uang kasir, validasi stok terisolasi per cabang, hingga laporan performa omzet dan analitik margin laba konsolidasian khusus pemilik toko (*Owner*).
 
 ---
 
@@ -18,8 +18,7 @@ Sistem kasir modern berbasis web yang dirancang khusus untuk memenuhi kebutuhan 
 8. [Database dan Migrasi](#database-dan-migrasi)
 9. [Pengujian dan Kualitas Kode](#pengujian-dan-kualitas-kode)
 10. [Keamanan](#keamanan)
-11. [Status Proyek dan Batasan](#status-proyek-dan-batasan)
-12. [Kontribusi dan Lisensi](#kontribusi-dan-lisensi)
+11. [Lisensi](#lisensi)
 
 ---
 
@@ -27,15 +26,15 @@ Sistem kasir modern berbasis web yang dirancang khusus untuk memenuhi kebutuhan 
 
 Operasional kedai kopi dan roti multi-cabang menghadapi berbagai tantangan pencatatan manual dan sistem kasir konvensional yang terfragmentasi:
 
-- **Risiko Ketidakkonsistenan Penjualan dan Stok:** Penjualan bersamaan saat jam sibuk berisiko menyebabkan stok bernilai negatif atau selisih fisik barang.
+- **Risiko Ketidakkonsistenan Penjualan dan Stok:** Penjualan bersamaan saat jam sibuk berisiko menyebabkan stok bernilai negatif atau selisih fisik barang.  
   *Solusi Lumbung POS:* Validasi stok atomik dengan mekanisme penguncian baris (`FOR UPDATE`) di level database Supabase/PostgreSQL serta transaksi all-or-nothing (tanpa potongan stok parsial).
-- **Penomoran Struk Tidak Teratur:** Kurangnya standarisasi penomoran struk mempersulit pelacakan transaksi antar-cabang.
+- **Penomoran Struk Tidak Teratur:** Kurangnya standarisasi penomoran struk mempersulit pelacakan transaksi antar-cabang.  
   *Solusi Lumbung POS:* Penomoran struk terstandarisasi dengan format otomatis `[KODE_CABANG]-[YYYYMMDD]-[0001..]` yang urut per cabang per hari dan aman terhadap *race condition*.
-- **Risiko Selisih Kas saat Pergantian Shift:** Ketidaksesuaian antara uang tunai di laci kasir dan catatan penjualan sistem sering tidak teridentifikasi penyebabnya.
+- **Risiko Selisih Kas saat Pergantian Shift:** Ketidaksesuaian antara uang tunai di laci kasir dan catatan penjualan sistem sering tidak teridentifikasi penyebabnya.  
   *Solusi Lumbung POS:* Manajemen shift kasir terstruktur dengan batas kas awal, perhitungan kas sistem otomatis, validasi uang fisik, serta kewajiban mengisi catatan rekonsiliasi jika selisih kas melebihi Rp20.000.
-- **Kesulitan Pengawasan Multi-Cabang bagi Pemilik:** Owner kesulitan memantau performa penjualan dan profitabilitas per cabang secara konsolidasi tanpa membocorkan data harga pokok penjualan (HPP/COGS) kepada staf cabang.
+- **Kesulitan Pengawasan Multi-Cabang bagi Pemilik:** Owner kesulitan memantau performa penjualan dan profitabilitas per cabang secara konsolidasi tanpa membocorkan data harga pokok penjualan (HPP/COGS) kepada staf cabang.  
   *Solusi Lumbung POS:* Isolasi data berbasis cabang melalui Row Level Security (RLS) di database. Kasir dan Kepala Toko hanya dapat mengakses data cabangnya tanpa melihat harga modal, sementara Owner dapat memantau seluruh cabang dan margin laba kotor.
-- **Alur Pelayanan dan Pesanan Dine-In yang Kurang Terstruktur:** Pesanan makan di tempat sering kali mengalami kendala pelacakan nomor meja dan antrean pesanan di meja barista/dapur.
+- **Alur Pelayanan dan Pesanan Dine-In yang Kurang Terstruktur:** Pesanan makan di tempat sering kali mengalami kendala pelacakan nomor meja dan antrean pesanan di meja barista/dapur.  
   *Solusi Lumbung POS:* Fitur denah meja interaktif (*Dine-In Table Management*) dan integrasi antrean pesanan dapur (Kitchen Display System/KDS) real-time.
 
 ---
@@ -79,7 +78,7 @@ Fitur aplikasi dikelompokkan secara jelas berdasarkan implementasi aktual di dal
 6. **Riwayat Transaksi dan Pembatalan/Void (`/transaksi`):**
    - Daftar riwayat transaksi penjualan terfilter berdasarkan cabang dan rentang tanggal.
    - Detail struk transaksi lengkap dengan rincian item, kustomisasi varian, dan bukti pembayaran.
-   - Fitur **Void Transaksi**: Hanya dapat dieksekusi oleh Kepala Toko cabang terkait atau Owner untuk transaksi lunas pada hari yang sama saat shift kasir masih buka, dengan alasan pembatalan minimal 10 karakter dan pengembalian stok otomatis.
+   - Fitur **Void Transaksi:** Hanya dapat dieksekusi oleh Kepala Toko cabang terkait atau Owner untuk transaksi lunas pada hari yang sama saat shift kasir masih buka, dengan alasan pembatalan minimal 10 karakter dan pengembalian stok otomatis.
 
 7. **Laporan & Analitik Penjualan (`/laporan`):**
    - Dapat diakses oleh Kepala Toko (terisolasi pada cabangnya) dan Owner (seluruh cabang).
@@ -171,51 +170,51 @@ Penegakan hak akses diterapkan secara ketat pada tiga lapisan: navigasi UI, Next
 
 ```text
 lumbung-pos/
-├── docs/                                # Dokumentasi laporan audit dan spesifikasi
+├── docs/
 │   └── AUDIT_PRD_SECURITY_REPORT.md
-├── public/                              # Aset statis gambar produk dan branding
+├── public/
 │   └── images/products/
 ├── src/
-│   ├── app/                             # Routing Next.js App Router
-│   │   ├── (auth)/                      # Halaman autentikasi login
-│   │   ├── (dashboard)/                 # Halaman utama aplikasi dengan AppShell
-│   │   │   ├── antrean/                 # Kitchen Display System & antrean pesanan
-│   │   │   ├── kasir/                   # Layar kasir POS dan keranjang
-│   │   │   ├── laporan/                 # Laporan analitik dan omzet penjualan
-│   │   │   ├── meja/                    # Denah meja interaktif
-│   │   │   ├── pengaturan/              # Pengaturan akun staf, cabang, dan audit log
-│   │   │   ├── produk/                  # Manajemen produk dan varian (Owner)
-│   │   │   ├── shift-cabang/            # Rekapitulasi dan verifikasi shift (Kepala Toko)
-│   │   │   ├── shift-saya/              # Pembukaan dan penutupan shift kasir
-│   │   │   ├── stok/                    # Monitoring stok dan penyesuaian stok cabang
-│   │   │   └── transaksi/               # Riwayat transaksi dan detail struk
-│   │   ├── actions/                     # Next.js Server Actions (antrean, shift, pos, dll.)
-│   │   ├── api/                         # Endpoint API publik & internal
-│   │   │   └── webhooks/mayar/          # Handler penerima notifikasi webhook Mayar
-│   │   ├── nonaktif/                    # Halaman pengalihan akun nonaktif
-│   │   └── globals.css                  # Konfigurasi CSS Tailwind v4
-│   ├── components/                      # Komponen modular antarmuka
-│   │   ├── brand/                       # Logo dan placeholder kartu produk
-│   │   ├── layout/                      # AppHeader, AppShell, SidebarNav, MobileDrawerNav
-│   │   ├── meja/                        # Komponen visual bentuk meja, kursi, dan drawer
-│   │   ├── orders/                      # Stepper timeline dan modal tracking pesanan
-│   │   ├── pos/                         # Modal custom produk, pilih meja, dialog struk
-│   │   ├── theme/                       # ThemeProvider dan ThemeToggle (Dark/Light)
-│   │   └── ui/                          # Komponen utilitas animasi dan format tampilan
-│   ├── lib/                             # Layanan bisnis dan integrasi pihak ketiga
-│   │   ├── auth/                        # Helper sesi dan profil pengguna
-│   │   ├── mayar/                       # Client HTTP Mayar, service transaksi, webhook utils
-│   │   ├── orders/                      # Manajemen state alur pesanan dan antrean
-│   │   ├── products/                    # Konfigurasi aturan kustomisasi produk
-│   │   ├── supabase/                    # Client Supabase (browser, server, admin, middleware)
-│   │   └── utils/                       # Formatter mata uang Rupiah, angka, dan tanggal/waktu
-│   └── middleware.ts                    # Edge middleware untuk route guard dan proteksi sesi
+│   ├── app/
+│   │   ├── (auth)/
+│   │   ├── (dashboard)/
+│   │   │   ├── antrean/
+│   │   │   ├── kasir/
+│   │   │   ├── laporan/
+│   │   │   ├── meja/
+│   │   │   ├── pengaturan/
+│   │   │   ├── produk/
+│   │   │   ├── shift-cabang/
+│   │   │   ├── shift-saya/
+│   │   │   ├── stok/
+│   │   │   └── transaksi/
+│   │   ├── actions/
+│   │   ├── api/
+│   │   │   └── webhooks/mayar/
+│   │   ├── nonaktif/
+│   │   └── globals.css
+│   ├── components/
+│   │   ├── brand/
+│   │   ├── layout/
+│   │   ├── meja/
+│   │   ├── orders/
+│   │   ├── pos/
+│   │   ├── theme/
+│   │   └── ui/
+│   ├── lib/
+│   │   ├── auth/
+│   │   ├── mayar/
+│   │   ├── orders/
+│   │   ├── products/
+│   │   ├── supabase/
+│   │   └── utils/
+│   └── middleware.ts
 ├── supabase/
-│   └── migrations/                      # Berkas migrasi database SQL Supabase
-├── tests/                               # Berkas pengujian otomatis (unit & integrasi)
-├── .env.local.example                   # Contoh konfigurasi environment variable
-├── package.json                         # Definisi dependensi dan script eksekusi
-└── tsconfig.json                        # Konfigurasi TypeScript
+│   └── migrations/
+├── tests/
+├── .env.local.example
+├── package.json
+└── tsconfig.json
 ```
 
 ---
@@ -278,7 +277,7 @@ Aplikasi membaca konfigurasi lingkungan melalui berkas `.env.local`. Variabel ya
 | `MAYAR_DEBUG` | Server-Only | Opsional | Set `'true'` untuk mengaktifkan logging diagnosis integrasi Mayar pada console server. |
 
 > [!CAUTION]
-> **Peringatan Keamanan Kredensial:**
+> **Peringatan Keamanan Kredensial:**  
 > Berkas `.env.local` berisi kunci rahasia (`SUPABASE_SERVICE_ROLE_KEY`, `MAYAR_API_KEY`) dan **DILARANG KERAS** diunggah atau di-commit ke repository publik GitHub. Pastikan `.env.local` tercantum dalam berkas `.gitignore`.
 
 ---
@@ -287,25 +286,25 @@ Aplikasi membaca konfigurasi lingkungan melalui berkas `.env.local`. Variabel ya
 
 Sistem menggunakan database relasional PostgreSQL yang di-host pada Supabase. Seluruh skema, batasan integritas, kebijakan RLS, dan stored procedure dikelola melalui 10 berkas migrasi SQL berikut:
 
-1. `20261022000001_create_pos_schema_and_policies.sql`:
+1. `20261022000001_create_pos_schema_and_policies.sql`:  
    Mendefinisikan 9 tabel inti (`cabang`, `profiles`, `produk`, `riwayat_harga_modal`, `stok_cabang`, `shift_kasir`, `transaksi`, `transaksi_item`, `transaksi_item_modal`, `audit_log`), check constraint validasi, indeks parsial unik, fungsi helper sesi, kebijakan Row Level Security (RLS), dan RPC transaksi inti.
-2. `20261022000002_seed_initial_data.sql`:
+2. `20261022000002_seed_initial_data.sql`:  
    Menyemai data awal master 3 cabang toko (Tebet, Bintaro, Depok), 9 akun pengguna awal, 18 katalog produk, riwayat harga modal, serta stok awal cabang.
-3. `20261022000003_grant_permissions.sql`:
+3. `20261022000003_grant_permissions.sql`:  
    Memberikan izin hak akses SQL (`GRANT SELECT, INSERT, UPDATE`) yang tepat pada tabel dan sequence untuk role `authenticated`.
-4. `20261022000004_fix_profiles_rls_for_inactive_users.sql`:
+4. `20261022000004_fix_profiles_rls_for_inactive_users.sql`:  
    Menyesuaikan kebijakan RLS tabel `profiles` agar akun dengan status nonaktif dapat diverifikasi status keaktifannya oleh middleware sebelum sesi diblokir.
-5. `20261022000005_import_historical_data.sql`:
+5. `20261022000005_import_historical_data.sql`:  
    Mengimpor 62 data transaksi historis (periode 1–15 Oktober 2026) dan 24 shift kerja untuk keperluan pengujian baseline dan audit laporan.
-6. `20261022000006_add_mayar_qris_functions.sql`:
+6. `20261022000006_add_mayar_qris_functions.sql`:  
    Menambahkan tabel `mayar_webhook_events` untuk audit payload webhook dan stored procedure `selesaikan_transaksi_mayar` dengan penanganan idempotensi pelunasan.
-7. `20261023000001_add_table_management_and_kds_queue.sql`:
+7. `20261023000001_add_table_management_and_kds_queue.sql`:  
    Menambahkan tabel `antrean_pesanan` untuk sinkronisasi status pesanan antrean dapur (KDS) dan nomor antrean harian.
-8. `20261024000001_create_meja_and_areas.sql`:
+8. `20261024000001_create_meja_and_areas.sql`:  
    Mendefinisikan tabel `meja`, area penempatan, kapasitas kursi, bentuk geometri meja, serta status ketersediaan meja makan.
-9. `20261026000001_add_product_variants_and_order_fields.sql`:
+9. `20261026000001_add_product_variants_and_order_fields.sql`:  
    Menambahkan tabel `produk_varian` untuk mendukung varian ukuran minuman (Large Cup +Rp5.000) dan kolom kustomisasi produk.
-10. `20261026000002_add_transaksi_order_and_table_columns.sql`:
+10. `20261026000002_add_transaksi_order_and_table_columns.sql`:  
     Menambahkan relasi kolom `tipe_pesanan`, `meja_id`, dan `nama_pelanggan` pada tabel `transaksi` untuk menjamin persistensi identitas pesanan makan di tempat.
 
 ---
@@ -320,14 +319,14 @@ Proyek dilengkapi dengan test suite otomatis komprehensif menggunakan runner baw
   ```bash
   npm test
   ```
-  *Cakupan:* 64 test case pada 6 test suite (`auth-account-status.test.ts`, `format.test.ts`, `meja-management.test.ts`, `order-flow-queue.test.ts`, `product-customization-and-variants.test.ts`, `qris-mayar.test.ts`, `capstone-audit-full.test.ts`).
+  *Cakupan:* 64 test case pada 6 test suite (`auth-account-status.test.ts`, `format.test.ts`, `meja-management.test.ts`, `order-flow-queue.test.ts`, `product-customization-and-variants.test.ts`, `qris-mayar.test.ts`, `capstone-audit-full.test.ts`).  
   *Status:* **64 Passed (100% SUCCESS)**.
 
 - **Menjalankan Pengujian Alur Pesanan Menyeluruh (Thorough Order Flow):**
   ```bash
   npm run test:order-flow
   ```
-  *Cakupan:* 7 pengujian skenario end-to-end mencakup perhitungan varian Large Cup (+Rp5.000), preservasi tipe pesanan *Dine In* dan Meja `M-02`, nama pemesan `Diwani`, penolakan pembayaran *Amount Mismatch*, idempotensi pelunasan, dan penempatan antrean KDS cabang.
+  *Cakupan:* 7 pengujian skenario end-to-end mencakup perhitungan varian Large Cup (+Rp5.000), preservasi tipe pesanan *Dine In* dan Meja `M-02`, nama pemesan `Diwani`, penolakan pembayaran *Amount Mismatch*, idempotensi pelunasan, dan penempatan antrean KDS cabang.  
   *Status:* **7 Passed (100% SUCCESS)**.
 
 - **Pemeriksaan Linter Kode:**
@@ -355,33 +354,13 @@ Aspek keamanan merupakan prioritas dalam perancangan Lumbung POS:
 5. **Verifikasi Webhook Mayar:** Endpoint webhook memverifikasi kesesuaian token rahasia pada header permintaan serta mencatat seluruh riwayat event pada tabel `mayar_webhook_events` untuk mencegah serangan replay (*replay attack*).
 6. **Immutabilitas Audit Log:** Tabel `audit_log` hanya memiliki izin `SELECT` dan `INSERT` internal tanpa izin `UPDATE` atau `DELETE`, sehingga catatan jejak audit tidak dapat dimanipulasi atau dihapus oleh pengguna mana pun.
 
-> [!NOTE]
+> [!NOTE]  
 > Sebelum menggunakan aplikasi di lingkungan produksi nyata, pastikan untuk mengganti seluruh password akun default, mengonfigurasi domain webhook berprotokol HTTPS, dan membatasi kredensial service role hanya pada server yang terpercaya.
 
 ---
 
-## Status Proyek dan Batasan
+## Lisensi
 
-### Status Implementasi Fungsional
-- [x] **Siap Digunakan (Functional):** Autentikasi RBAC, pembatasan akun nonaktif, POS kasir, katalog produk & varian harga, keranjang belanja, pembayaran tunai & kembalian, format struk BR-04, manajemen shift & rekonsiliasi kas, verifikasi shift, void transaksi, mutasi stok cabang, denah meja, antrean pesanan dapur (KDS), laporan penjualan multi-cabang dengan 4 chart interaktif, pengaturan akun & cabang, tema gelap/terang.
-- [x] **Memerlukan Kredensial Eksternal:** Pembayaran QRIS dinamis Mayar (memerlukan `MAYAR_API_KEY` dan `MAYAR_WEBHOOK_TOKEN` aktif dari akun merchant Mayar).
+Hak Cipta © 2026 **Lumbung Kopi dan Roti**. Seluruh hak cipta dilindungi undang-undang (*All Rights Reserved*).
 
-### Batasan Teknis Saat Ini
-- **Pencetakan Struk Thermal:** Fitur cetak struk menggunakan dialog cetak standar peramban web (`window.print()`) dengan CSS layout struk thermal 58mm/80mm. Integrasi langsung via protokol raw USB/Bluetooth ESC/POS belum diimplementasikan.
-- **Koneksi Real Settlement:** Pengujian QRIS Mayar pada repositori ini divalidasi menggunakan sandbox/mock resmi berstandar API Mayar v2 guna mencegah transaksi finansial riil selama masa pengembangan dan evaluasi.
-
----
-
-## Kontribusi dan Lisensi
-
-### Panduan Kontribusi
-Kontribusi pengembangan proyek dapat dilakukan dengan alur berikut:
-1. Lakukan *Fork* pada repository ini.
-2. Buat *feature branch* baru (`git checkout -b fitur/nama-fitur-baru`).
-3. Lakukan commit perubahan Anda dengan pesan yang jelas dan terstruktur (`git commit -m 'feat: menambahkan fitur baru'`).
-4. Pastikan seluruh pengujian dan linter lolos (`npm test` dan `npm run lint`).
-5. *Push* ke branch Anda (`git push origin fitur/nama-fitur-baru`).
-6. Ajukan *Pull Request* baru untuk ditinjau.
-
-### Lisensi
-Hak cipta proyek ini dilindungi. Lisensi distribusi perangkat lunak belum ditentukan (*All Rights Reserved* / Sesuai ketentuan evaluasi Capstone Project Lumbung Kopi dan Roti).
+Seluruh kode sumber, aset desain, skema database, dan dokumentasi pada repositori ini merupakan karya orisinal yang dikembangkan untuk sistem operasional kasir multi-cabang **Lumbung Kopi dan Roti**. Dilarang menggandakan, mendistribusikan, memodifikasi, atau memanfaatkan materi dalam repositori ini untuk tujuan komersial tanpa izin tertulis terlebih dahulu dari pemilik hak cipta.
