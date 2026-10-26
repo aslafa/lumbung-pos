@@ -159,11 +159,11 @@
         "bentuk": "persegi",
         "area": "Indoor",
         "status": "terisi",
-        "transaksi_terkini_id": "trx-test-var-1793022077673",
-        "nomor_struk_terkini": "STRUK-TEST-1793022077673",
-        "waktu_terisi": "2026-10-26T13:41:17.703Z",
+        "transaksi_terkini_id": "trx-test-var-1793025918340",
+        "nomor_struk_terkini": "STRUK-TEST-1793025918340",
+        "waktu_terisi": "2026-10-26T14:45:18.360Z",
         "pesanan_aktif": {
-          "nomor_struk": "STRUK-TEST-1793022077673",
+          "nomor_struk": "STRUK-TEST-1793025918340",
           "total": 54000,
           "items": [
             {
@@ -354,123 +354,13 @@
         "area": "Teras",
         "status": "tersedia"
       }
-    ],
-    "5081871b-3bf3-50c3-b8f4-e5087f2996e2": [
-      {
-        "id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2-M01",
-        "cabang_id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2",
-        "nomor_meja": "M-01",
-        "kapasitas": 2,
-        "bentuk": "lingkaran",
-        "area": "Indoor",
-        "status": "tersedia"
-      },
-      {
-        "id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2-M02",
-        "cabang_id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2",
-        "nomor_meja": "M-02",
-        "kapasitas": 2,
-        "bentuk": "lingkaran",
-        "area": "Indoor",
-        "status": "tersedia"
-      },
-      {
-        "id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2-M03",
-        "cabang_id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2",
-        "nomor_meja": "M-03",
-        "kapasitas": 4,
-        "bentuk": "persegi",
-        "area": "Indoor",
-        "status": "tersedia"
-      },
-      {
-        "id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2-M04",
-        "cabang_id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2",
-        "nomor_meja": "M-04",
-        "kapasitas": 4,
-        "bentuk": "persegi",
-        "area": "Indoor",
-        "status": "tersedia"
-      },
-      {
-        "id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2-M05",
-        "cabang_id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2",
-        "nomor_meja": "M-05",
-        "kapasitas": 4,
-        "bentuk": "persegi",
-        "area": "Indoor",
-        "status": "tersedia"
-      },
-      {
-        "id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2-M06",
-        "cabang_id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2",
-        "nomor_meja": "M-06",
-        "kapasitas": 6,
-        "bentuk": "persegi_panjang",
-        "area": "Indoor",
-        "status": "tersedia"
-      },
-      {
-        "id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2-M07",
-        "cabang_id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2",
-        "nomor_meja": "M-07",
-        "kapasitas": 2,
-        "bentuk": "lingkaran",
-        "area": "Outdoor",
-        "status": "tersedia"
-      },
-      {
-        "id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2-M08",
-        "cabang_id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2",
-        "nomor_meja": "M-08",
-        "kapasitas": 4,
-        "bentuk": "persegi",
-        "area": "Outdoor",
-        "status": "tersedia"
-      },
-      {
-        "id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2-M09",
-        "cabang_id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2",
-        "nomor_meja": "M-09",
-        "kapasitas": 4,
-        "bentuk": "persegi",
-        "area": "Outdoor",
-        "status": "tersedia"
-      },
-      {
-        "id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2-M10",
-        "cabang_id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2",
-        "nomor_meja": "M-10",
-        "kapasitas": 6,
-        "bentuk": "persegi_panjang",
-        "area": "Outdoor",
-        "status": "tersedia"
-      },
-      {
-        "id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2-M11",
-        "cabang_id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2",
-        "nomor_meja": "M-11",
-        "kapasitas": 4,
-        "bentuk": "persegi",
-        "area": "Teras",
-        "status": "tersedia"
-      },
-      {
-        "id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2-M12",
-        "cabang_id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2",
-        "nomor_meja": "M-12",
-        "kapasitas": 8,
-        "bentuk": "persegi_panjang",
-        "area": "Teras",
-        "status": "tersedia"
-      }
     ]
   },
   "antreanByCabang": {
     "030cfd87-60a3-51b0-9cdf-c083b46a32cd": [
       {
-        "transaksi_id": "1c2144ce-7c01-4636-8491-aa284580121b",
-        "nomor_struk": "TBT-20261026-0091",
+        "transaksi_id": "f805e2bc-2d80-4e8e-bd46-550d567cf4b7",
+        "nomor_struk": "TBT-20261026-0096",
         "nomor_antrean": "A-006",
         "cabang_id": "030cfd87-60a3-51b0-9cdf-c083b46a32cd",
         "cabang_nama": "Lumbung Tebet",
@@ -479,7 +369,7 @@
         "nama_pelanggan": "Diwani",
         "catatan_pesanan": "Meja M-02 Diwani",
         "status_pengerjaan": "MENUNGGU",
-        "dibuat_pada": "2026-10-26T13:41:51.810Z",
+        "dibuat_pada": "2026-10-26T14:45:52.215Z",
         "items": [
           {
             "nama": "Matcha Latte (Large)",
@@ -499,8 +389,8 @@
         "status_pembayaran": "LUNAS"
       },
       {
-        "transaksi_id": "5cf02785-fd9c-4bf0-89c8-5e2656de17d9",
-        "nomor_struk": "TBT-20261026-0090",
+        "transaksi_id": "0325621f-5d70-4db6-93e2-580a06b323f6",
+        "nomor_struk": "TBT-20261026-0095",
         "nomor_antrean": "A-005",
         "cabang_id": "030cfd87-60a3-51b0-9cdf-c083b46a32cd",
         "cabang_nama": "Lumbung Tebet",
@@ -509,7 +399,7 @@
         "nama_pelanggan": "Dino",
         "catatan_pesanan": "Tunai Large Cup",
         "status_pengerjaan": "MENUNGGU",
-        "dibuat_pada": "2026-10-26T13:41:50.816Z",
+        "dibuat_pada": "2026-10-26T14:45:51.457Z",
         "items": [
           {
             "nama": "Caffe Latte (Large)",
@@ -527,8 +417,8 @@
         "status_pembayaran": "LUNAS"
       },
       {
-        "transaksi_id": "87aea332-9ef3-46bf-9d05-fbf2fe1d84e2",
-        "nomor_struk": "TBT-20261026-0089",
+        "transaksi_id": "566dcd12-b3c0-4840-a1e0-0275b8b48e98",
+        "nomor_struk": "TBT-20261026-0094",
         "nomor_antrean": "A-004",
         "cabang_id": "030cfd87-60a3-51b0-9cdf-c083b46a32cd",
         "cabang_nama": "Lumbung Tebet",
@@ -537,7 +427,7 @@
         "nama_pelanggan": "Dino Takeaway",
         "catatan_pesanan": null,
         "status_pengerjaan": "MENUNGGU",
-        "dibuat_pada": "2026-10-26T13:41:49.909Z",
+        "dibuat_pada": "2026-10-26T14:45:50.827Z",
         "items": [
           {
             "nama": "Matcha Latte",
@@ -551,8 +441,8 @@
         "status_pembayaran": "MENUNGGU_BAYAR"
       },
       {
-        "transaksi_id": "9484b8ec-b2ab-4323-8d66-9a3a67065891",
-        "nomor_struk": "TBT-20261026-0088",
+        "transaksi_id": "6fcf5f1f-f19f-4860-8aa0-2fd6e5292d73",
+        "nomor_struk": "TBT-20261026-0093",
         "nomor_antrean": "A-003",
         "cabang_id": "030cfd87-60a3-51b0-9cdf-c083b46a32cd",
         "cabang_nama": "Lumbung Tebet",
@@ -561,7 +451,7 @@
         "nama_pelanggan": "Dino",
         "catatan_pesanan": "Uji refresh",
         "status_pengerjaan": "MENUNGGU",
-        "dibuat_pada": "2026-10-26T13:41:48.833Z",
+        "dibuat_pada": "2026-10-26T14:45:49.802Z",
         "items": [
           {
             "nama": "Caffe Latte (Large)",
@@ -575,8 +465,8 @@
         "status_pembayaran": "LUNAS"
       },
       {
-        "transaksi_id": "b92493eb-d58c-434c-befe-c4f3e78535b9",
-        "nomor_struk": "TBT-20261026-0087",
+        "transaksi_id": "5ef45fbd-f0f0-4841-ba21-ca1cd2707134",
+        "nomor_struk": "TBT-20261026-0092",
         "nomor_antrean": "A-002",
         "cabang_id": "030cfd87-60a3-51b0-9cdf-c083b46a32cd",
         "cabang_nama": "Lumbung Tebet",
@@ -585,7 +475,7 @@
         "nama_pelanggan": "Dino",
         "catatan_pesanan": "Less sugar, meja 07",
         "status_pengerjaan": "MENUNGGU",
-        "dibuat_pada": "2026-10-26T13:41:46.515Z",
+        "dibuat_pada": "2026-10-26T14:45:48.116Z",
         "items": [
           {
             "nama": "Caffe Latte (Large)",
