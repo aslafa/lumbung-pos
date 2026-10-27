@@ -254,7 +254,7 @@
         "kapasitas": 2,
         "bentuk": "lingkaran",
         "area": "Indoor",
-        "status": "tersedia",
+        "status": "menunggu_dibersihkan",
         "transaksi_terkini_id": null,
         "nomor_struk_terkini": null,
         "waktu_terisi": null,
@@ -303,7 +303,7 @@
         "kapasitas": 2,
         "bentuk": "lingkaran",
         "area": "Outdoor",
-        "status": "tersedia",
+        "status": "menunggu_dibersihkan",
         "transaksi_terkini_id": null,
         "nomor_struk_terkini": null,
         "waktu_terisi": null,
@@ -354,6 +354,226 @@
         "area": "Teras",
         "status": "tersedia"
       }
+    ],
+    "5081871b-3bf3-50c3-b8f4-e5087f2996e2": [
+      {
+        "id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2-M01",
+        "cabang_id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2",
+        "nomor_meja": "M-01",
+        "kapasitas": 2,
+        "bentuk": "lingkaran",
+        "area": "Indoor",
+        "status": "tersedia"
+      },
+      {
+        "id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2-M02",
+        "cabang_id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2",
+        "nomor_meja": "M-02",
+        "kapasitas": 2,
+        "bentuk": "lingkaran",
+        "area": "Indoor",
+        "status": "tersedia"
+      },
+      {
+        "id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2-M03",
+        "cabang_id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2",
+        "nomor_meja": "M-03",
+        "kapasitas": 4,
+        "bentuk": "persegi",
+        "area": "Indoor",
+        "status": "tersedia"
+      },
+      {
+        "id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2-M04",
+        "cabang_id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2",
+        "nomor_meja": "M-04",
+        "kapasitas": 4,
+        "bentuk": "persegi",
+        "area": "Indoor",
+        "status": "tersedia"
+      },
+      {
+        "id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2-M05",
+        "cabang_id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2",
+        "nomor_meja": "M-05",
+        "kapasitas": 4,
+        "bentuk": "persegi",
+        "area": "Indoor",
+        "status": "tersedia"
+      },
+      {
+        "id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2-M06",
+        "cabang_id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2",
+        "nomor_meja": "M-06",
+        "kapasitas": 6,
+        "bentuk": "persegi_panjang",
+        "area": "Indoor",
+        "status": "tersedia"
+      },
+      {
+        "id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2-M07",
+        "cabang_id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2",
+        "nomor_meja": "M-07",
+        "kapasitas": 2,
+        "bentuk": "lingkaran",
+        "area": "Outdoor",
+        "status": "tersedia"
+      },
+      {
+        "id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2-M08",
+        "cabang_id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2",
+        "nomor_meja": "M-08",
+        "kapasitas": 4,
+        "bentuk": "persegi",
+        "area": "Outdoor",
+        "status": "tersedia"
+      },
+      {
+        "id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2-M09",
+        "cabang_id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2",
+        "nomor_meja": "M-09",
+        "kapasitas": 4,
+        "bentuk": "persegi",
+        "area": "Outdoor",
+        "status": "tersedia"
+      },
+      {
+        "id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2-M10",
+        "cabang_id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2",
+        "nomor_meja": "M-10",
+        "kapasitas": 6,
+        "bentuk": "persegi_panjang",
+        "area": "Outdoor",
+        "status": "tersedia"
+      },
+      {
+        "id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2-M11",
+        "cabang_id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2",
+        "nomor_meja": "M-11",
+        "kapasitas": 4,
+        "bentuk": "persegi",
+        "area": "Teras",
+        "status": "tersedia"
+      },
+      {
+        "id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2-M12",
+        "cabang_id": "5081871b-3bf3-50c3-b8f4-e5087f2996e2",
+        "nomor_meja": "M-12",
+        "kapasitas": 8,
+        "bentuk": "persegi_panjang",
+        "area": "Teras",
+        "status": "tersedia"
+      }
+    ],
+    "b76a9d0d-9422-5849-8829-756d702053b9": [
+      {
+        "id": "b76a9d0d-9422-5849-8829-756d702053b9-M01",
+        "cabang_id": "b76a9d0d-9422-5849-8829-756d702053b9",
+        "nomor_meja": "M-01",
+        "kapasitas": 2,
+        "bentuk": "lingkaran",
+        "area": "Indoor",
+        "status": "tersedia"
+      },
+      {
+        "id": "b76a9d0d-9422-5849-8829-756d702053b9-M02",
+        "cabang_id": "b76a9d0d-9422-5849-8829-756d702053b9",
+        "nomor_meja": "M-02",
+        "kapasitas": 2,
+        "bentuk": "lingkaran",
+        "area": "Indoor",
+        "status": "tersedia"
+      },
+      {
+        "id": "b76a9d0d-9422-5849-8829-756d702053b9-M03",
+        "cabang_id": "b76a9d0d-9422-5849-8829-756d702053b9",
+        "nomor_meja": "M-03",
+        "kapasitas": 4,
+        "bentuk": "persegi",
+        "area": "Indoor",
+        "status": "tersedia"
+      },
+      {
+        "id": "b76a9d0d-9422-5849-8829-756d702053b9-M04",
+        "cabang_id": "b76a9d0d-9422-5849-8829-756d702053b9",
+        "nomor_meja": "M-04",
+        "kapasitas": 4,
+        "bentuk": "persegi",
+        "area": "Indoor",
+        "status": "tersedia"
+      },
+      {
+        "id": "b76a9d0d-9422-5849-8829-756d702053b9-M05",
+        "cabang_id": "b76a9d0d-9422-5849-8829-756d702053b9",
+        "nomor_meja": "M-05",
+        "kapasitas": 4,
+        "bentuk": "persegi",
+        "area": "Indoor",
+        "status": "tersedia"
+      },
+      {
+        "id": "b76a9d0d-9422-5849-8829-756d702053b9-M06",
+        "cabang_id": "b76a9d0d-9422-5849-8829-756d702053b9",
+        "nomor_meja": "M-06",
+        "kapasitas": 6,
+        "bentuk": "persegi_panjang",
+        "area": "Indoor",
+        "status": "tersedia"
+      },
+      {
+        "id": "b76a9d0d-9422-5849-8829-756d702053b9-M07",
+        "cabang_id": "b76a9d0d-9422-5849-8829-756d702053b9",
+        "nomor_meja": "M-07",
+        "kapasitas": 2,
+        "bentuk": "lingkaran",
+        "area": "Outdoor",
+        "status": "tersedia"
+      },
+      {
+        "id": "b76a9d0d-9422-5849-8829-756d702053b9-M08",
+        "cabang_id": "b76a9d0d-9422-5849-8829-756d702053b9",
+        "nomor_meja": "M-08",
+        "kapasitas": 4,
+        "bentuk": "persegi",
+        "area": "Outdoor",
+        "status": "tersedia"
+      },
+      {
+        "id": "b76a9d0d-9422-5849-8829-756d702053b9-M09",
+        "cabang_id": "b76a9d0d-9422-5849-8829-756d702053b9",
+        "nomor_meja": "M-09",
+        "kapasitas": 4,
+        "bentuk": "persegi",
+        "area": "Outdoor",
+        "status": "tersedia"
+      },
+      {
+        "id": "b76a9d0d-9422-5849-8829-756d702053b9-M10",
+        "cabang_id": "b76a9d0d-9422-5849-8829-756d702053b9",
+        "nomor_meja": "M-10",
+        "kapasitas": 6,
+        "bentuk": "persegi_panjang",
+        "area": "Outdoor",
+        "status": "tersedia"
+      },
+      {
+        "id": "b76a9d0d-9422-5849-8829-756d702053b9-M11",
+        "cabang_id": "b76a9d0d-9422-5849-8829-756d702053b9",
+        "nomor_meja": "M-11",
+        "kapasitas": 4,
+        "bentuk": "persegi",
+        "area": "Teras",
+        "status": "tersedia"
+      },
+      {
+        "id": "b76a9d0d-9422-5849-8829-756d702053b9-M12",
+        "cabang_id": "b76a9d0d-9422-5849-8829-756d702053b9",
+        "nomor_meja": "M-12",
+        "kapasitas": 8,
+        "bentuk": "persegi_panjang",
+        "area": "Teras",
+        "status": "tersedia"
+      }
     ]
   },
   "antreanByCabang": {
@@ -368,7 +588,7 @@
         "nomor_meja": "M-02",
         "nama_pelanggan": "Diwani",
         "catatan_pesanan": "Meja M-02 Diwani",
-        "status_pengerjaan": "MENUNGGU",
+        "status_pengerjaan": "SELESAI",
         "dibuat_pada": "2026-10-26T14:45:52.215Z",
         "items": [
           {
@@ -386,7 +606,8 @@
         ],
         "total": 68000,
         "metode_bayar": "qris",
-        "status_pembayaran": "LUNAS"
+        "status_pembayaran": "LUNAS",
+        "diselesaikan_pada": "2026-10-27T06:31:57.679Z"
       },
       {
         "transaksi_id": "0325621f-5d70-4db6-93e2-580a06b323f6",
@@ -398,7 +619,7 @@
         "nomor_meja": "07",
         "nama_pelanggan": "Dino",
         "catatan_pesanan": "Tunai Large Cup",
-        "status_pengerjaan": "MENUNGGU",
+        "status_pengerjaan": "SELESAI",
         "dibuat_pada": "2026-10-26T14:45:51.457Z",
         "items": [
           {
@@ -414,7 +635,8 @@
         ],
         "total": 68000,
         "metode_bayar": "tunai",
-        "status_pembayaran": "LUNAS"
+        "status_pembayaran": "LUNAS",
+        "diselesaikan_pada": "2026-10-27T06:31:57.679Z"
       },
       {
         "transaksi_id": "566dcd12-b3c0-4840-a1e0-0275b8b48e98",
@@ -426,7 +648,7 @@
         "nomor_meja": null,
         "nama_pelanggan": "Dino Takeaway",
         "catatan_pesanan": null,
-        "status_pengerjaan": "MENUNGGU",
+        "status_pengerjaan": "SELESAI",
         "dibuat_pada": "2026-10-26T14:45:50.827Z",
         "items": [
           {
@@ -438,7 +660,8 @@
         ],
         "total": 30000,
         "metode_bayar": "qris",
-        "status_pembayaran": "MENUNGGU_BAYAR"
+        "status_pembayaran": "MENUNGGU_BAYAR",
+        "diselesaikan_pada": "2026-10-27T06:31:57.679Z"
       },
       {
         "transaksi_id": "6fcf5f1f-f19f-4860-8aa0-2fd6e5292d73",
@@ -450,7 +673,7 @@
         "nomor_meja": "07",
         "nama_pelanggan": "Dino",
         "catatan_pesanan": "Uji refresh",
-        "status_pengerjaan": "MENUNGGU",
+        "status_pengerjaan": "SELESAI",
         "dibuat_pada": "2026-10-26T14:45:49.802Z",
         "items": [
           {
@@ -462,7 +685,8 @@
         ],
         "total": 33000,
         "metode_bayar": "qris",
-        "status_pembayaran": "LUNAS"
+        "status_pembayaran": "LUNAS",
+        "diselesaikan_pada": "2026-10-27T06:31:57.679Z"
       },
       {
         "transaksi_id": "5ef45fbd-f0f0-4841-ba21-ca1cd2707134",
@@ -474,7 +698,7 @@
         "nomor_meja": "07",
         "nama_pelanggan": "Dino",
         "catatan_pesanan": "Less sugar, meja 07",
-        "status_pengerjaan": "MENUNGGU",
+        "status_pengerjaan": "SELESAI",
         "dibuat_pada": "2026-10-26T14:45:48.116Z",
         "items": [
           {
@@ -492,7 +716,8 @@
         ],
         "total": 68000,
         "metode_bayar": "qris",
-        "status_pembayaran": "LUNAS"
+        "status_pembayaran": "LUNAS",
+        "diselesaikan_pada": "2026-10-27T06:31:57.679Z"
       }
     ]
   },

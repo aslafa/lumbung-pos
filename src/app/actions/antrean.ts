@@ -1,6 +1,6 @@
 'use server';
 
-import { getUserProfile } from '@/lib/auth/get-user-profile';
+import { getUserProfile } from '../../lib/auth/get-user-profile.ts';
 import {
   getAntreanList,
   transitionStatusPengerjaan,
@@ -10,7 +10,7 @@ import {
   PesananAntreanItem,
   MejaItem,
   JenisPesanan
-} from '@/lib/orders/order-flow';
+} from '../../lib/orders/order-flow.ts';
 import { revalidatePath } from 'next/cache';
 
 export interface AntreanDataResponse {
@@ -39,7 +39,7 @@ export async function getAntreanDataAction(targetCabangId?: string): Promise<Ant
 
     // Hydrate & sinkronkan pesanan aktif dari Supabase transaksi
     try {
-      const { createAdminClient } = await import('@/lib/supabase/admin');
+      const { createAdminClient } = await import('../../lib/supabase/admin.ts');
       const admin = createAdminClient();
 
       if (admin) {
@@ -175,7 +175,7 @@ export async function getAntreanDataAction(targetCabangId?: string): Promise<Ant
         }
 
         if (trxList && trxList.length > 0) {
-          const { registerPesananAntrean, getPesananByTransaksiId } = await import('@/lib/orders/order-flow');
+          const { registerPesananAntrean, getPesananByTransaksiId } = await import('../../lib/orders/order-flow.ts');
           for (const trx of trxList) {
             // HANYA sinkronkan jika memiliki status_pengerjaan aktif yang belum selesai di database
             if (!trx.status_pengerjaan || !['MENUNGGU', 'DIPROSES', 'SIAP_DIAMBIL'].includes(trx.status_pengerjaan)) {
@@ -363,7 +363,7 @@ export async function tambahAtauUbahMejaAction(
       return { success: false, error: 'Hanya Owner yang berwenang mengatur konfigurasi denah meja.' };
     }
 
-    const { addOrUpdateMeja } = await import('@/lib/orders/order-flow');
+    const { addOrUpdateMeja } = await import('../../lib/orders/order-flow.ts');
     const res = addOrUpdateMeja(cabangId, data);
 
     if (res.success) {
@@ -380,27 +380,101 @@ export async function tambahAtauUbahMejaAction(
 }
 
 /**
- * Server Action: Mengosongkan daftar antrean pesanan aktif untuk cabang tertentu atau seluruh cabang
+ * Server Action: Mengosongkan daftar antrean pesanan aktif untuk cabang tertentu atau seluruh cabang.
+ * Memperbarui status_pengerjaan menjadi 'SELESAI' di operational store dan database Supabase
+ * tanpa menghapus transaksi ataupun mengubah riwayat penjualan / keuangan.
  */
 export async function kosongkanAntreanAction(
   targetCabangId?: string
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string; count?: number }> {
   try {
     const { profile } = await getUserProfile();
     if (!profile) {
       return { success: false, error: 'Sesi tidak valid.' };
     }
 
-    const { clearAntreanList } = await import('@/lib/orders/order-flow');
+    // Validasi otorisasi peran & cabang (BR-01)
+    if (profile.peran !== 'owner' && targetCabangId && targetCabangId !== 'all' && targetCabangId !== profile.cabang_id) {
+      return { success: false, error: 'Tidak memiliki otorisasi untuk mengosongkan antrean cabang lain.' };
+    }
+
+    if (profile.peran !== 'owner' && !profile.cabang_id) {
+      return { success: false, error: 'Cabang pengguna tidak terdaftar.' };
+    }
+
     const effectiveCabangId = profile.peran === 'owner' && targetCabangId
       ? targetCabangId
       : profile.cabang_id || undefined;
 
-    clearAntreanList(effectiveCabangId);
+    const { createAdminClient } = await import('../../lib/supabase/admin.ts');
+    const admin = createAdminClient();
+    const dbActiveTrxIds: string[] = [];
+    const nowIso = new Date().toISOString();
+
+    if (admin) {
+      try {
+        // Query seluruh transaksi aktif yang memenuhi syarat dikosongkan (status lunas dan belum selesai)
+        let query = admin
+          .from('transaksi')
+          .select('id, cabang_id, status, status_pengerjaan')
+          .in('status', ['lunas'])
+          .in('status_pengerjaan', ['MENUNGGU', 'DIPROSES', 'SIAP_DIAMBIL']);
+
+        if (effectiveCabangId && effectiveCabangId !== 'all') {
+          query = query.eq('cabang_id', effectiveCabangId);
+        }
+
+        const { data: activeTrx, error: queryErr } = await query;
+
+        if (queryErr) {
+          // Jika kolom status_pengerjaan belum ada di database lama (code 42703), lanjutkan via fallback operational store
+          if (queryErr.code !== '42703') {
+            console.error('[kosongkanAntreanAction] Database select error:', queryErr);
+            return { success: false, error: `Gagal membaca transaksi antrean: ${queryErr.message}` };
+          }
+        } else if (activeTrx && activeTrx.length > 0) {
+          for (const t of activeTrx) {
+            dbActiveTrxIds.push(t.id);
+          }
+
+          // Update status_pengerjaan transaksi yang aktif menjadi 'SELESAI'
+          const { error: updateErr } = await admin
+            .from('transaksi')
+            .update({
+              status_pengerjaan: 'SELESAI',
+              diselesaikan_pada: nowIso,
+            })
+            .in('id', dbActiveTrxIds);
+
+          if (updateErr) {
+            console.error('[kosongkanAntreanAction] Database update error:', updateErr);
+            return { success: false, error: `Gagal memperbarui status transaksi di database: ${updateErr.message}` };
+          }
+        }
+      } catch (dbErr) {
+        console.error('[kosongkanAntreanAction] Database exception:', dbErr);
+        return {
+          success: false,
+          error: dbErr instanceof Error ? dbErr.message : 'Terjadi kesalahan database saat mengosongkan antrean.',
+        };
+      }
+    }
+
+    // Sinkronkan pembersihan ke operational store (file & in-memory)
+    const { clearAntreanList } = await import('../../lib/orders/order-flow.ts');
+    const opRes = clearAntreanList(effectiveCabangId, dbActiveTrxIds);
+
+    const totalCleared = Math.max(opRes.clearedCount, dbActiveTrxIds.length);
 
     revalidatePath('/antrean');
     revalidatePath('/kasir');
-    return { success: true };
+    revalidatePath('/transaksi');
+    revalidatePath('/meja');
+
+    return {
+      success: true,
+      count: totalCleared,
+    };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Gagal mengosongkan antrean.';
     return { success: false, error: msg };

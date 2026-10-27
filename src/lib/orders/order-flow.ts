@@ -537,13 +537,56 @@ export function removePesananFromAntrean(transaksiId: string): boolean {
 
 /**
  * Mengosongkan daftar antrean pesanan untuk cabang tertentu atau seluruh cabang
+ * Menandai seluruh antrean aktif menjadi 'SELESAI', memperbarui waktu penyelesaian,
+ * dan memindahkan meja DINE_IN terkait ke status 'menunggu_dibersihkan'.
  */
-export function clearAntreanList(cabangId?: string): void {
+export function clearAntreanList(
+  cabangId?: string,
+  extraTransaksiIds?: string[]
+): { clearedCount: number; clearedIds: string[] } {
   const store = getStore();
-  if (cabangId && cabangId !== 'all') {
-    store.antreanByCabang.set(cabangId, []);
-  } else {
-    store.antreanByCabang.clear();
+  const clearedIds: string[] = [];
+  const now = new Date().toISOString();
+
+  const targetCabangs = cabangId && cabangId !== 'all'
+    ? [cabangId]
+    : Array.from(store.antreanByCabang.keys());
+
+  for (const cId of targetCabangs) {
+    const list = store.antreanByCabang.get(cId) || [];
+    for (const item of list) {
+      if (item.status_pengerjaan !== 'SELESAI') {
+        item.status_pengerjaan = 'SELESAI';
+        item.diselesaikan_pada = item.diselesaikan_pada || now;
+        clearedIds.push(item.transaksi_id);
+
+        // Jika pesanan DINE_IN dan memiliki nomor meja, ubah status meja jadi 'menunggu_dibersihkan'
+        if (item.jenis_pesanan === 'DINE_IN' && item.nomor_meja) {
+          updateStatusMeja(cId, item.nomor_meja, 'menunggu_dibersihkan');
+        }
+      }
+    }
   }
+
+  // Jika ada extraTransaksiIds dari transaksi database yang belum tercatat atau belum SELESAI di store
+  if (extraTransaksiIds && extraTransaksiIds.length > 0) {
+    for (const txId of extraTransaksiIds) {
+      if (!clearedIds.includes(txId)) {
+        clearedIds.push(txId);
+      }
+      for (const [cId, list] of store.antreanByCabang.entries()) {
+        const found = list.find((p) => p.transaksi_id === txId);
+        if (found && found.status_pengerjaan !== 'SELESAI') {
+          found.status_pengerjaan = 'SELESAI';
+          found.diselesaikan_pada = found.diselesaikan_pada || now;
+          if (found.jenis_pesanan === 'DINE_IN' && found.nomor_meja) {
+            updateStatusMeja(cId, found.nomor_meja, 'menunggu_dibersihkan');
+          }
+        }
+      }
+    }
+  }
+
   saveStoreToFile(store);
+  return { clearedCount: clearedIds.length, clearedIds };
 }

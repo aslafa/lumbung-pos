@@ -15,6 +15,8 @@ import {
   Eye,
   AlertTriangle,
   Trash2,
+  ShieldCheck,
+  X,
 } from 'lucide-react';
 import { PesananAntreanItem, MejaItem, StatusPengerjaan } from '@/lib/orders/order-types';
 import {
@@ -156,22 +158,45 @@ export function AntreanClient({
     });
   };
 
-  const handleKosongkanAntrean = () => {
-    if (antreanList.length === 0) return;
-    const confirmMsg = isOwner && selectedCabang === 'all'
-      ? 'Apakah Anda yakin ingin mengosongkan antrean seluruh cabang?'
-      : 'Apakah Anda yakin ingin mengosongkan antrean cabang ini?';
-    if (!window.confirm(confirmMsg)) return;
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
+
+  const handleOpenConfirm = () => {
+    if (antreanList.length === 0 || isPending || isClearing) return;
+    setIsConfirmModalOpen(true);
+  };
+
+  const handleCloseConfirm = () => {
+    if (isClearing) return;
+    setIsConfirmModalOpen(false);
+  };
+
+  const handleExecuteKosongkan = () => {
+    if (antreanList.length === 0 || isClearing || isPending) return;
+
+    setIsClearing(true);
+    setActionError(null);
+    setActionSuccess(null);
 
     startTransition(async () => {
-      setActionError(null);
-      const res = await kosongkanAntreanAction(selectedCabang);
-      if (res.success) {
-        setAntreanList([]);
-        setActionSuccess('Layar antrean berhasil dikosongkan.');
-        setTimeout(() => setActionSuccess(null), 3500);
-      } else {
-        setActionError(res.error || 'Gagal mengosongkan antrean.');
+      try {
+        const res = await kosongkanAntreanAction(selectedCabang);
+        if (res.success) {
+          setIsConfirmModalOpen(false);
+          setAntreanList([]);
+          const clearedCount = res.count ?? antreanList.length;
+          setActionSuccess(
+            `Layar antrean berhasil dikosongkan. ${clearedCount} pesanan telah ditandai selesai. Riwayat transaksi & audit tetap aman.`
+          );
+          await fetchLatestData(false);
+          setTimeout(() => setActionSuccess(null), 5000);
+        } else {
+          setActionError(res.error || 'Gagal mengosongkan antrean.');
+        }
+      } catch (err) {
+        setActionError(err instanceof Error ? err.message : 'Terjadi kesalahan sistem saat mengosongkan antrean.');
+      } finally {
+        setIsClearing(false);
       }
     });
   };
@@ -271,13 +296,17 @@ export function AntreanClient({
           {antreanList.length > 0 && (
             <button
               type="button"
-              onClick={handleKosongkanAntrean}
-              disabled={isPending}
+              onClick={handleOpenConfirm}
+              disabled={isPending || isClearing}
               title="Kosongkan seluruh daftar antrean aktif"
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 border border-rose-200 dark:border-rose-900/60 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-xs font-semibold text-rose-700 dark:text-rose-300 hover:bg-rose-100 transition-colors cursor-pointer shrink-0"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-rose-200 dark:border-rose-900/60 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-xs font-semibold text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/60 transition-colors cursor-pointer shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Trash2 className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
-              <span className="hidden md:inline">Kosongkan</span>
+              {isClearing ? (
+                <RefreshCw className="w-3.5 h-3.5 animate-spin text-rose-600 dark:text-rose-400" />
+              ) : (
+                <Trash2 className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
+              )}
+              <span className="hidden md:inline">{isClearing ? 'Memproses...' : 'Kosongkan'}</span>
             </button>
           )}
 
@@ -675,6 +704,117 @@ export function AntreanClient({
             );
           }}
         />
+      )}
+
+      {/* Modal Dialog Konfirmasi Kosongkan Antrean */}
+      {isConfirmModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="confirm-modal-title"
+            className="bg-[#FAF7F2] dark:bg-[#1E1915] border border-[#E8DFD3] dark:border-[#2C2420] rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl relative space-y-4 animate-in zoom-in-95 duration-150"
+          >
+            {/* Header Modal */}
+            <div className="flex items-start justify-between border-b border-[#E8DFD3] dark:border-[#2C2420] pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-rose-100 dark:bg-rose-950/60 border border-rose-300 dark:border-rose-900/60 flex items-center justify-center shrink-0">
+                  <Trash2 className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+                </div>
+                <div>
+                  <h3 id="confirm-modal-title" className="text-base sm:text-lg font-bold text-[#2C1810] dark:text-[#F5EBE1]">
+                    Kosongkan Seluruh Antrean?
+                  </h3>
+                  <p className="text-xs text-[#78716C] dark:text-[#A8A29E]">
+                    {selectedCabang === 'all'
+                      ? 'Seluruh cabang toko (Mode Owner)'
+                      : `Cabang: ${cabangList.find((c) => c.id === selectedCabang)?.nama || userCabangNama || 'Aktif'}`}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleCloseConfirm}
+                disabled={isClearing}
+                className="p-1.5 text-[#78716C] hover:text-[#2C1810] dark:hover:text-[#F5EBE1] rounded-xl transition-colors cursor-pointer disabled:opacity-50"
+                aria-label="Tutup dialog"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="space-y-3.5 text-xs sm:text-sm text-[#4A3B32] dark:text-[#D6C7BC]">
+              <p>
+                Tindakan ini akan menyelesaikan dan mengeluarkan{' '}
+                <strong className="text-rose-700 dark:text-rose-400 font-bold">
+                  {antreanList.length} pesanan antrean aktif
+                </strong>{' '}
+                dari layar KDS barista/dapur. Meja DINE IN yang terkait akan otomatis dialihkan ke status pembersihan.
+              </p>
+
+              {/* Daftar nomor antrean aktif */}
+              {antreanList.length > 0 && (
+                <div className="bg-white dark:bg-[#181310] border border-[#E8DFD3] dark:border-[#2C2420] rounded-2xl p-3 space-y-1.5">
+                  <span className="text-[11px] font-semibold text-[#78716C] dark:text-[#A8A29E] block">
+                    Daftar antrean yang akan dikosongkan ({antreanList.length}):
+                  </span>
+                  <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
+                    {antreanList.map((item) => (
+                      <span
+                        key={item.transaksi_id}
+                        className="px-2 py-0.5 rounded-lg bg-stone-100 dark:bg-stone-800 text-[11px] font-mono font-bold text-[#2C1810] dark:text-[#F5EBE1] border border-stone-200 dark:border-stone-700"
+                      >
+                        {item.nomor_antrean} ({item.nama_pelanggan || (item.nomor_meja ? `Meja ${item.nomor_meja}` : 'Takeaway')})
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Jaminan Keamanan Data & Transaksi (PRD Audit & Finance Protection) */}
+              <div className="flex items-start gap-2.5 p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 text-xs">
+                <ShieldCheck className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400 mt-0.5" />
+                <div>
+                  <span className="font-bold block">Integritas Riwayat Transaksi Terjamin</span>
+                  <span>
+                    Data penjualan, struk, metode pembayaran, kas shift, dan audit log tidak akan dihapus dan tetap aman tersimpan untuk pelaporan.
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-[#E8DFD3] dark:border-[#2C2420]">
+              <button
+                type="button"
+                onClick={handleCloseConfirm}
+                disabled={isClearing}
+                className="px-4 py-2 rounded-xl border border-[#E8DFD3] dark:border-[#2C2420] text-xs font-semibold text-[#4A3B32] dark:text-[#D6C7BC] hover:bg-[#FAF7F2] dark:hover:bg-[#28211B] transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleExecuteKosongkan}
+                disabled={isClearing || isPending}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+              >
+                {isClearing ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Mengosongkan...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Ya, Kosongkan Antrean</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
