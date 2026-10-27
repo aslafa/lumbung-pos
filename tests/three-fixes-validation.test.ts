@@ -19,6 +19,7 @@ import {
   clearStoreForTesting,
   validatePembayaranTunai,
 } from '../src/lib/orders/order-flow.ts';
+import { isTableCleaning, matchNomorMeja } from '../src/lib/orders/order-types.ts';
 import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -108,6 +109,43 @@ describe('Pengujian Validasi 3 Perbaikan Masalah Lumbung POS', () => {
       const relRes = releaseMeja(CABANG_TEST, nomorMeja);
       assert.strictEqual(relRes.success, true);
       assert.strictEqual(isMejaAvailable(CABANG_TEST, nomorMeja), true);
+    });
+
+    it('TC-FIX1-04: isTableCleaning merekonsiliasi perlu_dibersihkan dan menunggu_dibersihkan secara konsisten', () => {
+      assert.strictEqual(isTableCleaning('perlu_dibersihkan'), true);
+      assert.strictEqual(isTableCleaning('menunggu_dibersihkan'), true);
+      assert.strictEqual(isTableCleaning('tersedia'), false);
+      assert.strictEqual(isTableCleaning('terisi'), false);
+      assert.strictEqual(isTableCleaning(undefined), false);
+
+      // Verifikasi matchNomorMeja
+      assert.strictEqual(matchNomorMeja('01', '1'), true);
+      assert.strictEqual(matchNomorMeja('Meja 01', '1'), true);
+      assert.strictEqual(matchNomorMeja('M-02', '2'), true);
+    });
+
+    it('TC-FIX1-05: Pembaruan file storage operasional langsung terbaca ulang saat mtime berubah', () => {
+      const storePath = path.join(process.cwd(), 'data', 'operational-store.json');
+      assert.ok(fs.existsSync(storePath));
+
+      // Ambil status saat ini
+      const listAwal = getDefaultMejaCabang(CABANG_TEST);
+      assert.ok(listAwal.length > 0);
+
+      // Simulasikan worker lain mengubah file langsung di disk
+      const rawContent = fs.readFileSync(storePath, 'utf-8');
+      const parsed = JSON.parse(rawContent);
+      const firstTable = parsed.mejaByCabang[CABANG_TEST][0];
+      firstTable.status = 'menunggu_dibersihkan';
+      fs.writeFileSync(storePath, JSON.stringify(parsed, null, 2), 'utf-8');
+      const future = new Date(Date.now() + 2000);
+      fs.utimesSync(storePath, future, future);
+
+      // Panggil getDefaultMejaCabang - harus membaca ulang dari disk karena mtime berubah
+      const listBaru = getDefaultMejaCabang(CABANG_TEST);
+      const tableUpdated = listBaru.find((m) => m.nomor_meja === firstTable.nomor_meja);
+      assert.ok(tableUpdated);
+      assert.strictEqual(tableUpdated.status, 'menunggu_dibersihkan', 'Harus mendeteksi modifikasi file disk seketika');
     });
   });
 
@@ -276,28 +314,77 @@ describe('Pengujian Validasi 3 Perbaikan Masalah Lumbung POS', () => {
       );
     });
 
-    it('TC-FIX3-04: Verifikasi kasir-client.tsx memiliki pencegahan pembayaran tunai kurang dan notifikasi kekurangan', () => {
+    it('TC-FIX3-04: Verifikasi kasir-client.tsx menggunakan popup toast khusus (bukan banner atas) dengan auto-hide dan indikator kembalian', () => {
       const kasirClientPath = path.join(process.cwd(), 'src', 'app', '(dashboard)', 'kasir', 'kasir-client.tsx');
       assert.ok(fs.existsSync(kasirClientPath));
 
       const kasirSource = fs.readFileSync(kasirClientPath, 'utf-8');
 
-      // Cek validasi pembayaran tunai di kasir-client
+      // 1. Cek validasi pembayaran tunai di kasir-client
       assert.ok(
         kasirSource.includes('nominalDiterima < totalBayar'),
         'kasir-client harus memeriksa apakah nominal uang diterima kurang dari total bayar'
       );
       assert.ok(
-        kasirSource.includes('Pembayaran belum mencukupi. Kekurangan'),
-        'kasir-client harus menampilkan notifikasi "Pembayaran belum mencukupi. Kekurangan ..."'
+        kasirSource.includes('paymentShortageToast'),
+        'kasir-client harus memiliki state paymentShortageToast'
       );
+      assert.ok(
+        kasirSource.includes('Pembayaran belum mencukupi. Kekurangan'),
+        'kasir-client harus memuat pesan "Pembayaran belum mencukupi. Kekurangan ..."'
+      );
+
+      // 2. Banner lama disupresi / dibersihkan saat pembayaran tunai kurang
+      assert.ok(
+        kasirSource.includes('setErrorMessage(null)') && kasirSource.includes('setPaymentShortageToast'),
+        'kasir-client harus menonaktifkan error banner atas saat popup kekurangan uang ditampilkan'
+      );
+
+      // 3. Popup toast memiliki auto-hide timer dan tombol tutup manual
+      assert.ok(
+        kasirSource.includes('setTimeout') && kasirSource.includes('3500'),
+        'Toast kekurangan pembayaran harus otomatis menghilang setelah sekitar 3-4 detik'
+      );
+      assert.ok(
+        kasirSource.includes('Tutup notifikasi'),
+        'Toast harus memiliki tombol manual close X'
+      );
+
+      // 4. Desain konsisten: merah muda lembut, teks merah, sudut membulat, bayangan halus
+      assert.ok(
+        kasirSource.includes('bg-red-50') && kasirSource.includes('rounded-2xl') && kasirSource.includes('shadow-lg'),
+        'Toast harus menggunakan latar merah muda lembut, rounded-2xl, dan shadow halus'
+      );
+
+      // 5. Indikator kekurangan uang pada kotak kembalian tetap dipertahankan
       assert.ok(
         kasirSource.includes('Kurang ${formatRupiah(totalBayar - nominalDiterima)}'),
         'kasir-client harus mempertahankan indikator kekurangan uang di kotak kembalian'
       );
+    });
+
+    it('TC-FIX3-05: Verifikasi meja-client.tsx dan TableSelectorModal.tsx merekonsiliasi status pembersihan dan sinkronisasi instan', () => {
+      const mejaClientPath = path.join(process.cwd(), 'src', 'app', '(dashboard)', 'meja', 'meja-client.tsx');
+      assert.ok(fs.existsSync(mejaClientPath));
+      const mejaSource = fs.readFileSync(mejaClientPath, 'utf-8');
+
+      // Verifikasi penggunaan isTableCleaning
       assert.ok(
-        kasirSource.includes('onCleanMeja={handleCleanMeja}'),
-        'kasir-client harus meneruskan onCleanMeja ke TableSelectorModal'
+        mejaSource.includes('isTableCleaning(m.status)'),
+        'meja-client harus menggunakan isTableCleaning untuk stats dan filter'
+      );
+      assert.ok(
+        mejaSource.includes('fetchLatestData();') && mejaSource.includes('setInterval(fetchLatestData, 8000)'),
+        'meja-client harus memanggil fetchLatestData secara instan saat mount / cabang berganti'
+      );
+
+      const modalPath = path.join(process.cwd(), 'src', 'components', 'pos', 'TableSelectorModal.tsx');
+      assert.ok(fs.existsSync(modalPath));
+      const modalSource = fs.readFileSync(modalPath, 'utf-8');
+
+      assert.ok(
+        modalSource.includes('isTableCleaning(m.status)'),
+        'TableSelectorModal harus menggunakan isTableCleaning untuk stats dan filter'
       );
     });
   });

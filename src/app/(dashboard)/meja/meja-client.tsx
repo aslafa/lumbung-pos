@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { TableShape } from "@/components/meja/TableShape";
 import { TableDetailDrawer } from "@/components/meja/TableDetailDrawer";
 import { CountUp } from "@/components/ui/CountUp";
-import { MejaItem, AreaMeja, BentukMeja } from "@/lib/orders/order-types";
+import { MejaItem, AreaMeja, BentukMeja, isTableCleaning, matchNomorMeja } from "@/lib/orders/order-types";
 import {
   getAntreanDataAction,
   bersihkanMejaAction,
@@ -80,12 +80,13 @@ export function MejaClient({
   const [newBentuk, setNewBentuk] = useState<BentukMeja>("persegi");
   const [isSavingMeja, setIsSavingMeja] = useState<boolean>(false);
 
-  // Sync meja list on interval (polling fallback)
+  // Sync meja list immediately and on interval (polling fallback)
   useEffect(() => {
+    let active = true;
     const fetchLatestData = async () => {
       try {
         const res = await getAntreanDataAction(selectedCabangId);
-        if (res.success && res.mejaList) {
+        if (active && res.success && res.mejaList) {
           setMejaList(res.mejaList);
           setLastRefreshed(new Date());
 
@@ -94,7 +95,7 @@ export function MejaClient({
             const updated = res.mejaList.find(
               (m) =>
                 m.id === selectedMeja.id ||
-                m.nomor_meja === selectedMeja.nomor_meja,
+                matchNomorMeja(m.nomor_meja, selectedMeja.nomor_meja),
             );
             if (updated) setSelectedMeja(updated);
           }
@@ -104,8 +105,12 @@ export function MejaClient({
       }
     };
 
+    fetchLatestData();
     const interval = setInterval(fetchLatestData, 8000);
-    return () => clearInterval(interval);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
   }, [selectedCabangId, selectedMeja]);
 
   // Handle manual refresh
@@ -128,7 +133,7 @@ export function MejaClient({
       // Optimistic update status meja ke tersedia
       setMejaList((prev) =>
         prev.map((m) =>
-          m.nomor_meja === meja.nomor_meja
+          matchNomorMeja(m.nomor_meja, meja.nomor_meja)
             ? {
                 ...m,
                 status: "tersedia",
@@ -153,6 +158,11 @@ export function MejaClient({
         }
         setSelectedMeja(null);
       } else {
+        // Rollback optimistic update jika gagal simpan di database / state sumber
+        const updateRes = await getAntreanDataAction(selectedCabangId);
+        if (updateRes.success && updateRes.mejaList) {
+          setMejaList(updateRes.mejaList);
+        }
         showNotice("error", res.error || "Gagal membersihkan meja");
       }
     });
@@ -235,9 +245,7 @@ export function MejaClient({
     const total = mejaList.length;
     const tersedia = mejaList.filter((m) => m.status === "tersedia").length;
     const terisi = mejaList.filter((m) => m.status === "terisi").length;
-    const perluBersih = mejaList.filter(
-      (m) => m.status === "menunggu_dibersihkan",
-    ).length;
+    const perluBersih = mejaList.filter((m) => isTableCleaning(m.status)).length;
     return { total, tersedia, terisi, perluBersih };
   }, [mejaList]);
 
@@ -249,8 +257,12 @@ export function MejaClient({
         return false;
       }
       // Status filter
-      if (selectedStatus !== "SEMUA" && m.status !== selectedStatus) {
-        return false;
+      if (selectedStatus !== "SEMUA") {
+        if (selectedStatus === "menunggu_dibersihkan" || selectedStatus === "perlu_dibersihkan") {
+          if (!isTableCleaning(m.status)) return false;
+        } else if (m.status !== selectedStatus) {
+          return false;
+        }
       }
       // Capacity filter
       if (capacityFilter === "2" && m.kapasitas !== 2) return false;

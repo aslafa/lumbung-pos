@@ -81,6 +81,14 @@ export function createDefaultMejaList(cabangId: string): MejaItem[] {
 }
 
 /**
+ * Helper untuk mengecek apakah status meja sedang memerlukan pembersihan
+ * Menyatukan 'perlu_dibersihkan' dan 'menunggu_dibersihkan' secara konsisten (Client & Server safe)
+ */
+export function isTableCleaning(status: StatusMeja | string | undefined | null): boolean {
+  return status === 'menunggu_dibersihkan' || status === 'perlu_dibersihkan';
+}
+
+/**
  * Helper untuk mencocokkan nomor meja secara fleksibel (Client & Server safe)
  * Contoh: '07' cocok dengan 'M-07', 'M07', 'Meja 07', '7'
  */

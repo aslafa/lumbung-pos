@@ -26,6 +26,8 @@ declare global {
 const DATA_DIR = path.join(process.cwd(), 'data');
 const STORE_FILE = path.join(DATA_DIR, 'operational-store.json');
 
+let lastStoreFileMtime = 0;
+
 function saveStoreToFile(store: OperationalStore): void {
   try {
     if (!fs.existsSync(DATA_DIR)) {
@@ -37,6 +39,7 @@ function saveStoreToFile(store: OperationalStore): void {
       antreanCounter: Object.fromEntries(store.antreanCounter),
     };
     fs.writeFileSync(STORE_FILE, JSON.stringify(serialized, null, 2), 'utf-8');
+    lastStoreFileMtime = fs.statSync(STORE_FILE).mtimeMs;
   } catch (err) {
     // Graceful fallback for read-only environments
     console.warn('[OperationalStore] Could not persist to file:', err);
@@ -62,6 +65,22 @@ function loadStoreFromFile(): OperationalStore | null {
 }
 
 function getStore(): OperationalStore {
+  try {
+    if (fs.existsSync(STORE_FILE)) {
+      const stats = fs.statSync(STORE_FILE);
+      if (stats.mtimeMs !== lastStoreFileMtime || !globalThis.__lumbungOperationalStore) {
+        const fromFile = loadStoreFromFile();
+        if (fromFile) {
+          globalThis.__lumbungOperationalStore = fromFile;
+          lastStoreFileMtime = stats.mtimeMs;
+          return fromFile;
+        }
+      }
+    }
+  } catch {
+    // Fallback if stat fails
+  }
+
   if (!globalThis.__lumbungOperationalStore) {
     const fromFile = loadStoreFromFile();
     if (fromFile) {
@@ -253,8 +272,21 @@ export function updateStatusMeja(
   newStatus: StatusMeja
 ): { success: boolean; error?: string } {
   const store = getStore();
-  const list = getDefaultMejaCabang(cabangId);
-  const target = list.find((m) => matchNomorMeja(m.nomor_meja, nomorMeja));
+  let list = getDefaultMejaCabang(cabangId);
+  let target = list.find((m) => matchNomorMeja(m.nomor_meja, nomorMeja));
+  let matchedCabangId = cabangId;
+
+  if (!target) {
+    for (const [cId, cList] of store.mejaByCabang.entries()) {
+      const found = cList.find((m) => matchNomorMeja(m.nomor_meja, nomorMeja));
+      if (found) {
+        target = found;
+        list = cList;
+        matchedCabangId = cId;
+        break;
+      }
+    }
+  }
 
   if (!target) {
     return { success: false, error: `Meja ${nomorMeja} tidak ditemukan.` };
@@ -268,7 +300,7 @@ export function updateStatusMeja(
     target.pesanan_aktif = null;
   }
 
-  store.mejaByCabang.set(cabangId, [...list]);
+  store.mejaByCabang.set(matchedCabangId, [...list]);
   saveStoreToFile(store);
   return { success: true };
 }

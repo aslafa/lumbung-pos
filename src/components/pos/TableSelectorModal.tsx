@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { MejaItem, StatusMeja, createDefaultMejaList } from '@/lib/orders/order-types';
+import { MejaItem, StatusMeja, createDefaultMejaList, isTableCleaning, matchNomorMeja } from '@/lib/orders/order-types';
 import { TableShape } from '@/components/meja/TableShape';
 import { X, Check, AlertCircle, Sparkles, Coffee } from 'lucide-react';
 
@@ -40,14 +40,11 @@ function TableSelectorModalDialog({
   // State lokal untuk menandai meja yang baru dibersihkan sebelum prop mejaList tersinkronisasi
   const [cleanedMejaSet, setCleanedMejaSet] = useState<Set<string>>(() => new Set<string>());
 
-  // Helper untuk mengecek apakah status meja sedang perlu dibersihkan
-  const isCleaningStatus = (status: string) =>
-    status === 'menunggu_dibersihkan' || status === 'perlu_dibersihkan';
-
   // Daftar meja final dengan status optimistik diterapkan secara murni/deklaratif
   const displayMejaList = useMemo<MejaItem[]>(() => {
     return effectiveMejaList.map((m: MejaItem) => {
-      if (cleanedMejaSet.has(m.nomor_meja)) {
+      const isCleaned = Array.from(cleanedMejaSet).some((num) => matchNomorMeja(num, m.nomor_meja));
+      if (isCleaned) {
         return {
           ...m,
           status: 'tersedia' as StatusMeja,
@@ -66,7 +63,7 @@ function TableSelectorModalDialog({
       if (filterKapasitas !== 'all' && m.kapasitas !== filterKapasitas) return false;
       if (filterStatus !== 'all') {
         if (filterStatus === 'menunggu_dibersihkan' || filterStatus === 'perlu_dibersihkan') {
-          if (!isCleaningStatus(m.status)) return false;
+          if (!isTableCleaning(m.status)) return false;
         } else if (m.status !== filterStatus) {
           return false;
         }
@@ -75,14 +72,16 @@ function TableSelectorModalDialog({
     });
   }, [displayMejaList, filterKapasitas, filterStatus]);
 
-  const activeMejaObj = displayMejaList.find((m: MejaItem) => m.nomor_meja === tentativeMeja);
+  const activeMejaObj = displayMejaList.find((m: MejaItem) =>
+    tentativeMeja ? matchNomorMeja(m.nomor_meja, tentativeMeja) : false
+  );
 
   const stats = useMemo(() => {
     return {
       total: displayMejaList.length,
       tersedia: displayMejaList.filter((m: MejaItem) => m.status === 'tersedia').length,
       terisi: displayMejaList.filter((m: MejaItem) => m.status === 'terisi').length,
-      perluBersih: displayMejaList.filter((m: MejaItem) => isCleaningStatus(m.status)).length,
+      perluBersih: displayMejaList.filter((m: MejaItem) => isTableCleaning(m.status)).length,
     };
   }, [displayMejaList]);
 
@@ -95,6 +94,13 @@ function TableSelectorModalDialog({
       if (onCleanMeja) {
         await onCleanMeja(nomorMeja);
       }
+    } catch {
+      // Rollback jika terjadi kegagalan
+      setCleanedMejaSet((prev) => {
+        const next = new Set(prev);
+        next.delete(nomorMeja);
+        return next;
+      });
     } finally {
       setCleaningMap((prev) => ({ ...prev, [nomorMeja]: false }));
     }
@@ -256,7 +262,7 @@ function TableSelectorModalDialog({
                 filteredMeja.map((meja: MejaItem) => {
                   const isSelected = tentativeMeja === meja.nomor_meja;
                   const isAvailable = meja.status === 'tersedia';
-                  const isCleaning = isCleaningStatus(meja.status);
+                  const isCleaning = isTableCleaning(meja.status);
                   const isProcessingClean = !!cleaningMap[meja.nomor_meja];
 
                   return (

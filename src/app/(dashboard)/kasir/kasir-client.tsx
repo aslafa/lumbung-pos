@@ -130,6 +130,22 @@ export function KasirPOSClient({
   const [strukResult, setStrukResult] = useState<SimpanTransaksiResult | null>(null);
   const [mayarModalData, setMayarModalData] = useState<BuatTransaksiMayarResult | null>(null);
 
+  // State Notifikasi Popup Pembayaran Tunai Kurang
+  const [paymentShortageToast, setPaymentShortageToast] = useState<{
+    isOpen: boolean;
+    message: string;
+    kekurangan: number;
+  } | null>(null);
+
+  // Auto-hide popup toast setelah 3.5 detik (3-4 detik)
+  useEffect(() => {
+    if (!paymentShortageToast?.isOpen) return;
+    const timer = setTimeout(() => {
+      setPaymentShortageToast((prev) => (prev ? { ...prev, isOpen: false } : null));
+    }, 3500);
+    return () => clearTimeout(timer);
+  }, [paymentShortageToast]);
+
   // Fungsi sinkronisasi data antrean & meja dari server
   const refreshAntreanDanMeja = useCallback(async () => {
     try {
@@ -357,6 +373,12 @@ export function KasirPOSClient({
   const nominalDiterima = parseInt(uangDiterima || '0', 10);
   const kembalian = nominalDiterima >= totalBayar ? nominalDiterima - totalBayar : 0;
 
+  // Buka modal denah meja dengan sinkronisasi data terkini terlebih dahulu
+  const handleOpenTableModal = async () => {
+    await refreshAntreanDanMeja();
+    setIsTableModalOpen(true);
+  };
+
   // Handle pembersihan meja langsung dari modal denah kasir
   const handleCleanMeja = async (nomorMeja: string) => {
     try {
@@ -381,10 +403,13 @@ export function KasirPOSClient({
       if (res.success) {
         await refreshAntreanDanMeja();
       } else {
+        await refreshAntreanDanMeja();
         setErrorMessage(res.error || 'Gagal mengubah status meja.');
       }
     } catch (err) {
       console.error('Error saat membersihkan meja:', err);
+      await refreshAntreanDanMeja();
+      setErrorMessage('Terjadi kesalahan saat membersihkan meja.');
     }
   };
 
@@ -410,12 +435,19 @@ export function KasirPOSClient({
     // Validasi Pembayaran Tunai Kurang
     if (metodeBayar === 'tunai' && nominalDiterima < totalBayar) {
       const kekurangan = totalBayar - nominalDiterima;
-      setErrorMessage(`Pembayaran belum mencukupi. Kekurangan ${formatRupiah(kekurangan)}.`);
+      setPaymentShortageToast({
+        isOpen: true,
+        message: `Pembayaran belum mencukupi. Kekurangan ${formatRupiah(kekurangan)}.`,
+        kekurangan,
+      });
+      // Pastikan banner lama dinonaktifkan / tidak muncul ganda
+      setErrorMessage(null);
       return;
     }
 
     setIsSubmitting(true);
     setErrorMessage(null);
+    setPaymentShortageToast(null);
 
     // Siapkan items lengkap dengan opsi kustomisasi & harga varian terpercaya
     const itemsPayload = cart.map((it) => {
@@ -568,7 +600,7 @@ export function KasirPOSClient({
           <div className="space-y-2">
             <button
               type="button"
-              onClick={() => setIsTableModalOpen(true)}
+              onClick={handleOpenTableModal}
               className={`w-full py-2.5 px-3 rounded-xl border text-xs font-bold flex items-center justify-between transition-all cursor-pointer ${
                 selectedMeja
                   ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-700 text-[#4A2E18] dark:text-amber-200 shadow-xs'
@@ -1027,6 +1059,30 @@ export function KasirPOSClient({
         </div>
       )}
 
+      {/* Toast Popup Validasi Pembayaran Tunai Kurang */}
+      {paymentShortageToast?.isOpen && (
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="fixed top-6 left-1/2 -translate-x-1/2 z-50 max-w-md w-[92%] sm:w-auto animate-in fade-in slide-in-from-top-4 duration-200"
+        >
+          <div className="flex items-center justify-between gap-3 px-4 py-3 bg-red-50 dark:bg-[#2A1715] border border-red-200 dark:border-red-800/80 rounded-2xl shadow-lg text-red-700 dark:text-red-300">
+            <div className="flex items-center gap-2.5">
+              <AlertCircle className="w-5 h-5 shrink-0 text-red-600 dark:text-red-400" />
+              <span className="text-xs sm:text-sm font-semibold">{paymentShortageToast.message}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setPaymentShortageToast((prev) => (prev ? { ...prev, isOpen: false } : null))}
+              className="p-1 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors cursor-pointer"
+              aria-label="Tutup notifikasi"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Pesan Error Sistem */}
       {errorMessage && (
         <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 rounded-xl p-3 flex items-start gap-2.5 text-xs text-red-700 dark:text-red-300">
@@ -1044,7 +1100,7 @@ export function KasirPOSClient({
             <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
               <button
                 type="button"
-                onClick={() => setIsTableModalOpen(true)}
+                onClick={handleOpenTableModal}
                 className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-bold bg-[#FAF7F2] dark:bg-[#28211B] text-[#4A2E18] dark:text-[#FAF7F2] border border-[#E8DFD3] dark:border-[#382F28] hover:bg-[#EAE0D5] transition-all cursor-pointer shadow-2xs flex-1 sm:flex-initial"
               >
                 <LayoutGrid className="w-4 h-4 text-[#C67C4E]" />
