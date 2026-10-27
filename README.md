@@ -2,6 +2,11 @@
 
 **Lumbung POS** adalah platform sistem kasir (*Point of Sale*) multi-cabang modern yang dirancang untuk mendukung operasional terpadu kedai kopi dan roti **Lumbung Kopi dan Roti**. Sistem ini mengintegrasikan seluruh alur bisnis dari hulu ke hilir: mulai dari transaksi kasir berkecepatan tinggi, kustomisasi varian menu, manajemen meja *Dine In*, antrean pesanan dapur secara *real-time* (Kitchen Display System), pembukuan shift dan rekonsiliasi uang kasir, validasi stok terisolasi per cabang, hingga laporan performa omzet dan analitik margin laba konsolidasian khusus pemilik toko (*Owner*).
 
+- 🌐 **Website Produksi:** [https://asna-lumbung-pos.netlify.app/](https://asna-lumbung-pos.netlify.app/)
+- 📦 **Repository GitHub:** [https://github.com/aslafa/lumbung-pos](https://github.com/aslafa/lumbung-pos) (Branch: `master`)
+- 📋 **Dokumen Rencana & Kasus Uji Formal:** [`docs/TEST_PLAN_LUMBUNG_POS.md`](docs/TEST_PLAN_LUMBUNG_POS.md)
+- 🛡️ **Laporan Audit Keamanan & PRD:** [`docs/AUDIT_PRD_SECURITY_REPORT.md`](docs/AUDIT_PRD_SECURITY_REPORT.md)
+
 ---
 
 ## Daftar Isi
@@ -196,6 +201,7 @@ Berikut adalah daftar 9 akun pengguna yang telah terkonfigurasi pada basis data 
 ```text
 lumbung-pos/
 ├── docs/
+│   ├── TEST_PLAN_LUMBUNG_POS.md
 │   └── AUDIT_PRD_SECURITY_REPORT.md
 ├── public/
 │   └── images/products/
@@ -409,7 +415,22 @@ Bagian ini mendokumentasikan keputusan arsitektur dan teknis kunci yang melandas
 
 ## Pengujian dan Kualitas Kode
 
-Proyek dilengkapi dengan test suite otomatis komprehensif menggunakan runner bawaan Node.js.
+Kualitas kode, keandalan alur bisnis, dan keamanan hak akses sistem Lumbung POS diuji melalui pengujian otomatis komprehensif serta rencana pengujian formal terstruktur.
+
+> 📄 **Dokumen Rencana & Kasus Uji Lengkap:**  
+> Seluruh matriks kasus uji (25 test case), mapping aturan bisnis (BR-01 s/d BR-12), audit checklist Row Level Security (RLS) 13 tabel, serta panduan pengujian manual dapat dilihat pada berkas:  
+> **[`docs/TEST_PLAN_LUMBUNG_POS.md`](docs/TEST_PLAN_LUMBUNG_POS.md)**
+
+### Perbedaan Pengujian Otomatis vs Pengujian Manual
+
+1. **Pengujian Otomatis (Automated Testing via `npm test`):**
+   - Menguji kebenaran algoritma, format nominal/waktu, integritas transaksi atomik, state machine KDS, penolakan produk nonaktif, batas diskon 10%, dan penegakan RLS antar-cabang.
+   - Menggunakan kredensial sesi pengguna nyata (`authenticated`) via `NEXT_PUBLIC_SUPABASE_ANON_KEY` (tanpa membypass RLS menggunakan service role).
+   - **Hasil Aktual:** **64 Passed (100% SUCCESS, 0 Failed, 0 Skipped)**.
+
+2. **Pengujian Manual di Lingkungan Produksi (Manual Production Testing):**
+   - Menguji interaksi fisik peramban (*touch/gestures* pada tablet $\ge$ 1024px), dialog preview cetak peramban untuk printer kasir thermal, serta verifikasi visual chart SVG.
+   - Pengujian manual pada domain produksi yang belum dieksekusi oleh penguji fisik dicatat dengan status **BELUM DIUJI** pada dokumen test plan (tidak disamakan dengan kelulusan unit test).
 
 ### Perintah Pengujian dan Verifikasi Kualitas
 
@@ -417,7 +438,7 @@ Proyek dilengkapi dengan test suite otomatis komprehensif menggunakan runner baw
   ```bash
   npm test
   ```
-  *Cakupan:* 64 test case pada 6 test suite (`auth-account-status.test.ts`, `format.test.ts`, `meja-management.test.ts`, `order-flow-queue.test.ts`, `product-customization-and-variants.test.ts`, `qris-mayar.test.ts`, `capstone-audit-full.test.ts`).  
+  *Cakupan:* 64 test case pada 7 test suite (`auth-account-status.test.ts`, `qris-mayar.test.ts`, `format.test.ts`, `order-flow-queue.test.ts`, `meja-management.test.ts`, `capstone-audit-full.test.ts`, `product-customization-and-variants.test.ts`).  
   *Status:* **64 Passed (100% SUCCESS)**.
 
 - **Menjalankan Pengujian Alur Pesanan Menyeluruh (Thorough Order Flow):**
