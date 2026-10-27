@@ -48,7 +48,7 @@ export function TableShape({
   const handleClick = onClick || onSelect;
   const isAvailable = status === 'tersedia';
   const isOccupied = status === 'terisi';
-  const isCleaning = status === 'menunggu_dibersihkan';
+  const isCleaning = status === 'menunggu_dibersihkan' || (status as string) === 'perlu_dibersihkan';
   const isInactive = status === 'tidak_aktif';
 
   const [now, setNow] = useState<number>(() => Date.now());

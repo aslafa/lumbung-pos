@@ -1,12 +1,14 @@
+import { formatRupiah } from '../utils/format.ts';
+
 export type JenisPesanan = 'DINE_IN' | 'TAKEAWAY';
-export type StatusMeja = 'tersedia' | 'terisi' | 'menunggu_dibersihkan';
+export type StatusMeja = 'tersedia' | 'terisi' | 'menunggu_dibersihkan' | 'perlu_dibersihkan';
 export type StatusPengerjaan = 'MENUNGGU' | 'DIPROSES' | 'SIAP_DIAMBIL' | 'SELESAI';
 export type BentukMeja = 'lingkaran' | 'persegi' | 'persegi_panjang';
 export type AreaMeja = 'Indoor' | 'Outdoor' | 'Teras';
 
 // Runtime export constants for compatibility with node --experimental-strip-types
 export const AreaMeja = { Indoor: 'Indoor', Outdoor: 'Outdoor', Teras: 'Teras' } as const;
-export const StatusMeja = { tersedia: 'tersedia', terisi: 'terisi', menunggu_dibersihkan: 'menunggu_dibersihkan' } as const;
+export const StatusMeja = { tersedia: 'tersedia', terisi: 'terisi', menunggu_dibersihkan: 'menunggu_dibersihkan', perlu_dibersihkan: 'perlu_dibersihkan' } as const;
 export const StatusPengerjaan = { MENUNGGU: 'MENUNGGU', DIPROSES: 'DIPROSES', SIAP_DIAMBIL: 'SIAP_DIAMBIL', SELESAI: 'SELESAI' } as const;
 export const BentukMeja = { lingkaran: 'lingkaran', persegi: 'persegi', persegi_panjang: 'persegi_panjang' } as const;
 export const JenisPesanan = { DINE_IN: 'DINE_IN', TAKEAWAY: 'TAKEAWAY' } as const;
@@ -76,4 +78,43 @@ export function createDefaultMejaList(cabangId: string): MejaItem[] {
     // Kapasitas 8 (Persegi Panjang Besar)
     { id: `${cabangId}-M12`, cabang_id: cabangId, nomor_meja: 'M-12', kapasitas: 8, bentuk: 'persegi_panjang', area: 'Teras', status: 'tersedia' },
   ];
+}
+
+/**
+ * Helper untuk mencocokkan nomor meja secara fleksibel (Client & Server safe)
+ * Contoh: '07' cocok dengan 'M-07', 'M07', 'Meja 07', '7'
+ */
+export function matchNomorMeja(a: string, b: string): boolean {
+  if (!a || !b) return false;
+  const cleanA = a.toLowerCase().trim();
+  const cleanB = b.toLowerCase().trim();
+  if (cleanA === cleanB) return true;
+  const numA = cleanA.replace(/^meja\s*/, '').replace(/^m-?0*/, '').replace(/^0+/, '');
+  const numB = cleanB.replace(/^meja\s*/, '').replace(/^m-?0*/, '').replace(/^0+/, '');
+  return numA !== '' && numA === numB;
+}
+
+/**
+ * Validasi pembayaran tunai POS (BR-07) (Client & Server safe)
+ * Memastikan uang diterima mencukupi total tagihan dan menghitung kekurangan/kembalian secara akurat.
+ */
+export function validatePembayaranTunai(
+  total: number,
+  uangDiterima: number
+): { valid: boolean; error?: string; kekurangan: number; kembalian: number } {
+  const uangBayar = Math.round(uangDiterima);
+  if (uangBayar < total) {
+    const kekurangan = total - uangBayar;
+    return {
+      valid: false,
+      error: `Pembayaran belum mencukupi. Kekurangan ${formatRupiah(kekurangan)}.`,
+      kekurangan,
+      kembalian: 0,
+    };
+  }
+  return {
+    valid: true,
+    kekurangan: 0,
+    kembalian: uangBayar - total,
+  };
 }

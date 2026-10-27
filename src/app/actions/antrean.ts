@@ -292,11 +292,31 @@ export async function bersihkanMejaAction(
       return { success: false, error: 'Sesi tidak valid.' };
     }
 
-    if (profile.peran !== 'owner' && profile.cabang_id !== cabangId) {
+    const effectiveCabangId =
+      profile.peran === 'owner' && cabangId && cabangId !== 'all'
+        ? cabangId
+        : profile.cabang_id || cabangId || 'cabang-utama';
+
+    if (profile.peran !== 'owner' && profile.cabang_id && effectiveCabangId && profile.cabang_id !== effectiveCabangId) {
       return { success: false, error: 'Tidak memiliki otorisasi pada cabang ini.' };
     }
 
-    const res = updateStatusMeja(cabangId, nomorMeja, 'tersedia');
+    const res = updateStatusMeja(effectiveCabangId, nomorMeja, 'tersedia');
+
+    // Sinkronisasi status ke Supabase table meja jika tersedia
+    try {
+      const { createAdminClient } = await import('../../lib/supabase/admin.ts');
+      const admin = createAdminClient();
+      if (admin) {
+        await admin
+          .from('meja')
+          .update({ status: 'tersedia', diubah_pada: new Date().toISOString() })
+          .match({ cabang_id: effectiveCabangId, nomor_meja: nomorMeja });
+      }
+    } catch {
+      // Non-fatal jika tabel meja tidak ada di remote db
+    }
+
     if (res.success) {
       revalidatePath('/kasir');
       revalidatePath('/antrean');
@@ -323,11 +343,31 @@ export async function pindahkanMejaKePerluDibersihkanAction(
       return { success: false, error: 'Sesi tidak valid.' };
     }
 
-    if (profile.peran !== 'owner' && profile.cabang_id !== cabangId) {
+    const effectiveCabangId =
+      profile.peran === 'owner' && cabangId && cabangId !== 'all'
+        ? cabangId
+        : profile.cabang_id || cabangId || 'cabang-utama';
+
+    if (profile.peran !== 'owner' && profile.cabang_id && effectiveCabangId && profile.cabang_id !== effectiveCabangId) {
       return { success: false, error: 'Tidak memiliki otorisasi pada cabang ini.' };
     }
 
-    const res = updateStatusMeja(cabangId, nomorMeja, 'menunggu_dibersihkan');
+    const res = updateStatusMeja(effectiveCabangId, nomorMeja, 'menunggu_dibersihkan');
+
+    // Sinkronisasi status ke Supabase table meja jika tersedia
+    try {
+      const { createAdminClient } = await import('../../lib/supabase/admin.ts');
+      const admin = createAdminClient();
+      if (admin) {
+        await admin
+          .from('meja')
+          .update({ status: 'menunggu_dibersihkan', diubah_pada: new Date().toISOString() })
+          .match({ cabang_id: effectiveCabangId, nomor_meja: nomorMeja });
+      }
+    } catch {
+      // Non-fatal jika tabel meja tidak ada di remote db
+    }
+
     if (res.success) {
       revalidatePath('/kasir');
       revalidatePath('/antrean');

@@ -10,7 +10,7 @@ import type {
   MejaItem,
   PesananAntreanItem,
 } from './order-types.ts';
-import { createDefaultMejaList } from './order-types.ts';
+import { createDefaultMejaList, matchNomorMeja } from './order-types.ts';
 
 // In-Memory & File-Backed Operational State synchronized with Supabase
 interface OperationalStore {
@@ -106,19 +106,6 @@ export function getDefaultMejaCabang(cabangId: string): MejaItem[] {
   return defaultMeja;
 }
 
-/**
- * Helper untuk mencocokkan nomor meja secara fleksibel
- * Contoh: '07' cocok dengan 'M-07', 'M07', 'Meja 07', '7'
- */
-export function matchNomorMeja(a: string, b: string): boolean {
-  if (!a || !b) return false;
-  const cleanA = a.toLowerCase().trim();
-  const cleanB = b.toLowerCase().trim();
-  if (cleanA === cleanB) return true;
-  const numA = cleanA.replace(/^meja\s*/, '').replace(/^m-?0*/, '').replace(/^0+/, '');
-  const numB = cleanB.replace(/^meja\s*/, '').replace(/^m-?0*/, '').replace(/^0+/, '');
-  return numA !== '' && numA === numB;
-}
 
 /**
  * Validasi ketersediaan meja sebelum transaksi (mencegah race condition kasir)
@@ -590,3 +577,4 @@ export function clearAntreanList(
   saveStoreToFile(store);
   return { clearedCount: clearedIds.length, clearedIds };
 }
+

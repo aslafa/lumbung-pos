@@ -125,7 +125,23 @@ export function MejaClient({
   // Handle Clean Table (Konfirmasi Meja Bersih -> Tersedia)
   const handleBersihkanMeja = async (meja: MejaItem) => {
     startTransition(async () => {
-      const res = await bersihkanMejaAction(selectedCabangId, meja.nomor_meja);
+      // Optimistic update status meja ke tersedia
+      setMejaList((prev) =>
+        prev.map((m) =>
+          m.nomor_meja === meja.nomor_meja
+            ? {
+                ...m,
+                status: "tersedia",
+                transaksi_terkini_id: null,
+                nomor_struk_terkini: null,
+                waktu_terisi: null,
+                pesanan_aktif: null,
+              }
+            : m
+        )
+      );
+      const targetCabang = meja.cabang_id || selectedCabangId;
+      const res = await bersihkanMejaAction(targetCabang, meja.nomor_meja);
       if (res.success) {
         showNotice(
           "success",

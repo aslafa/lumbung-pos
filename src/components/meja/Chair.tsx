@@ -1,10 +1,10 @@
 'use client';
 
-import React from 'react';
+import type { StatusMeja } from '@/lib/orders/order-types';
 
 interface ChairProps {
   orientation: 'top' | 'bottom' | 'left' | 'right';
-  status?: 'tersedia' | 'terisi' | 'menunggu_dibersihkan' | 'tidak_aktif' | 'dipesan';
+  status?: StatusMeja | 'tidak_aktif' | 'dipesan';
   className?: string;
 }
 
@@ -21,7 +21,7 @@ export function Chair({ orientation, status = 'tersedia', className = '' }: Chai
   let chairColors = 'bg-[#EDE4D8] border-[#D4C3B3] dark:bg-[#2A231E] dark:border-[#3D332C] shadow-xs';
   if (status === 'terisi') {
     chairColors = 'bg-[#C67C4E] border-[#A25E33] dark:bg-[#C67C4E] dark:border-[#8E4D25] shadow-xs';
-  } else if (status === 'menunggu_dibersihkan') {
+  } else if (status === 'menunggu_dibersihkan' || (status as string) === 'perlu_dibersihkan') {
     chairColors = 'bg-[#7DD3FC]/40 border-[#38BDF8] dark:bg-[#0284C7]/30 dark:border-[#0369A1] shadow-xs';
   } else if (status === 'dipesan') {
     chairColors = 'bg-[#C7D2FE] border-[#818CF8] dark:bg-[#312E81]/50 dark:border-[#4F46E5] shadow-xs';

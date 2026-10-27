@@ -41,6 +41,7 @@ export function TableStatusBadge({
       );
 
     case 'menunggu_dibersihkan':
+    case 'perlu_dibersihkan':
       return (
         <span
           className={`inline-flex items-center font-bold rounded-md bg-sky-50 text-sky-800 dark:bg-sky-950/60 dark:text-sky-300 border border-sky-300/80 dark:border-sky-800/80 ${sizeClasses} ${className}`}

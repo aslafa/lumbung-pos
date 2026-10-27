@@ -27,8 +27,8 @@ import {
 } from 'lucide-react';
 import { simpanTransaksiAction, SimpanTransaksiResult } from '@/app/actions/transaksi';
 import { buatTransaksiMayarAction, BuatTransaksiMayarResult } from '@/app/actions/mayar';
-import { getAntreanDataAction } from '@/app/actions/antrean';
-import { MejaItem, JenisPesanan, PesananAntreanItem, createDefaultMejaList } from '@/lib/orders/order-types';
+import { getAntreanDataAction, bersihkanMejaAction } from '@/app/actions/antrean';
+import { MejaItem, JenisPesanan, PesananAntreanItem, createDefaultMejaList, StatusMeja, matchNomorMeja } from '@/lib/orders/order-types';
 import { TableSelectorModal } from '@/components/pos/TableSelectorModal';
 import { KasirAntreanModal } from '@/components/pos/KasirAntreanModal';
 import { ProductCustomModal, CustomOrderOptions } from '@/components/pos/ProductCustomModal';
@@ -357,24 +357,48 @@ export function KasirPOSClient({
   const nominalDiterima = parseInt(uangDiterima || '0', 10);
   const kembalian = nominalDiterima >= totalBayar ? nominalDiterima - totalBayar : 0;
 
+  // Handle pembersihan meja langsung dari modal denah kasir
+  const handleCleanMeja = async (nomorMeja: string) => {
+    try {
+      // 1. Optimistic update di kasir state
+      setMejaList((prev) =>
+        prev.map((m) =>
+          matchNomorMeja(m.nomor_meja, nomorMeja)
+            ? {
+                ...m,
+                status: 'tersedia' as StatusMeja,
+                transaksi_terkini_id: null,
+                nomor_struk_terkini: null,
+                waktu_terisi: null,
+                pesanan_aktif: null,
+              }
+            : m
+        )
+      );
+
+      // 2. Simpan status meja ke database / state sumber
+      const res = await bersihkanMejaAction(effectiveCabangId, nomorMeja);
+      if (res.success) {
+        await refreshAntreanDanMeja();
+      } else {
+        setErrorMessage(res.error || 'Gagal mengubah status meja.');
+      }
+    } catch (err) {
+      console.error('Error saat membersihkan meja:', err);
+    }
+  };
+
   // Cek Kelayakan Tombol Simpan
   const isShiftOpen = !!shiftAktif;
   const isCartValid = cart.length > 0 && subtotal > 0;
   const isDiskonValid = effectiveDiskon === 0 || alasanDiskon.trim().length >= 3;
   const isTableValid = jenisPesanan === 'TAKEAWAY' || (jenisPesanan === 'DINE_IN' && !!selectedMeja);
 
-  let isPaymentValid = false;
-  if (metodeBayar === 'tunai') {
-    isPaymentValid = nominalDiterima >= totalBayar && totalBayar > 0;
-  } else if (metodeBayar === 'qris_manual' || metodeBayar === 'qris_mayar') {
-    isPaymentValid = totalBayar > 0;
-  }
-
+  // Tombol checkout dapat diklik jika cart, shift, diskon, dan meja valid
   const canSubmit =
     !isOwner &&
     isShiftOpen &&
     isCartValid &&
-    isPaymentValid &&
     isDiskonValid &&
     isTableValid &&
     !isSubmitting;
@@ -382,6 +406,13 @@ export function KasirPOSClient({
   // Eksekusi Simpan Transaksi (Tunai, QRIS Manual, atau QRIS Mayar)
   const handleSimpanTransaksi = async () => {
     if (!canSubmit || !shiftAktif) return;
+
+    // Validasi Pembayaran Tunai Kurang
+    if (metodeBayar === 'tunai' && nominalDiterima < totalBayar) {
+      const kekurangan = totalBayar - nominalDiterima;
+      setErrorMessage(`Pembayaran belum mencukupi. Kekurangan ${formatRupiah(kekurangan)}.`);
+      return;
+    }
 
     setIsSubmitting(true);
     setErrorMessage(null);
@@ -1355,6 +1386,7 @@ export function KasirPOSClient({
         mejaList={mejaList}
         selectedMeja={selectedMeja}
         onSelectMeja={(nomorMeja: string) => setSelectedMeja(nomorMeja)}
+        onCleanMeja={handleCleanMeja}
       />
 
       {/* Modal Ringkasan Antrean Pesanan Kasir POS */}

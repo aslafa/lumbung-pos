@@ -142,14 +142,32 @@ export function AntreanClient({
     });
   };
 
-  const handleCleanMeja = (nomorMeja: string) => {
+  const handleCleanMeja = (nomorMeja: string, targetCabangId?: string) => {
     setActionError(null);
     setActionSuccess(null);
 
+    // Optimistic update
+    setMejaList((prev) =>
+      prev.map((m) =>
+        m.nomor_meja === nomorMeja
+          ? {
+              ...m,
+              status: 'tersedia',
+              transaksi_terkini_id: null,
+              nomor_struk_terkini: null,
+              waktu_terisi: null,
+              pesanan_aktif: null,
+            }
+          : m
+      )
+    );
+
     startTransition(async () => {
-      const res = await bersihkanMejaAction(selectedCabang, nomorMeja);
+      const cId = targetCabangId || (selectedCabang !== 'all' ? selectedCabang : (userCabangId || ''));
+      const res = await bersihkanMejaAction(cId, nomorMeja);
       if (!res.success) {
         setActionError(res.error || 'Gagal mengubah status meja.');
+        await fetchLatestData(false);
       } else {
         setActionSuccess(`Meja ${nomorMeja} sekarang siap digunakan kembali.`);
         await fetchLatestData(false);
@@ -667,14 +685,14 @@ export function AntreanClient({
                     status={meja.status}
                     area={meja.area}
                     onClick={() => {
-                      if (meja.status === 'menunggu_dibersihkan') {
-                        handleCleanMeja(meja.nomor_meja);
+                      if (meja.status === 'menunggu_dibersihkan' || (meja.status as string) === 'perlu_dibersihkan') {
+                        handleCleanMeja(meja.nomor_meja, meja.cabang_id);
                       }
                     }}
                   />
-                  {meja.status === 'menunggu_dibersihkan' && (
+                  {(meja.status === 'menunggu_dibersihkan' || (meja.status as string) === 'perlu_dibersihkan') && (
                     <button
-                      onClick={() => handleCleanMeja(meja.nomor_meja)}
+                      onClick={() => handleCleanMeja(meja.nomor_meja, meja.cabang_id)}
                       disabled={isPending}
                       className="mt-1 py-1 px-2.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold rounded-lg flex items-center justify-center gap-1 cursor-pointer transition-colors shadow-2xs"
                     >

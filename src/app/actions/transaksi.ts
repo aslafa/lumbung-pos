@@ -16,6 +16,7 @@ import {
   formatItemDisplayName,
   type CustomOrderOptions
 } from '../../lib/products/product-config.ts';
+import { formatRupiah } from '../../lib/utils/format.ts';
 
 export interface TransaksiItemPayload {
   produk_id: string;
@@ -201,7 +202,11 @@ export async function simpanTransaksiAction(
     // 3. Validasi pembayaran
     const uangBayar = Math.round(params.uang_diterima);
     if (params.metode_bayar === 'tunai' && uangBayar < total) {
-      return { success: false, error: `Uang diterima (${uangBayar}) kurang dari total tagihan (${total}).` };
+      const kekurangan = total - uangBayar;
+      return {
+        success: false,
+        error: `Pembayaran belum mencukupi. Kekurangan ${formatRupiah(kekurangan)}.`,
+      };
     }
     const kembalian = params.metode_bayar === 'tunai' ? uangBayar - total : 0;
 

@@ -37,7 +37,7 @@ export function TableDetailDrawer({
   if (!isOpen || !meja) return null;
 
   const isOccupied = meja.status === 'terisi';
-  const isCleaning = meja.status === 'menunggu_dibersihkan';
+  const isCleaning = meja.status === 'menunggu_dibersihkan' || (meja.status as string) === 'perlu_dibersihkan';
   const isAvailable = meja.status === 'tersedia';
 
   // Hitung durasi terisi
