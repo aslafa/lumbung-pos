@@ -5,6 +5,7 @@ import { Profile } from '@/types/database';
 import { AppHeader } from './AppHeader';
 import { SidebarNav } from './SidebarNav';
 import { MobileDrawerNav } from './MobileDrawerNav';
+import { AccessDeniedNotice } from './AccessDeniedNotice';
 
 interface AppShellProps {
   profile: Profile;
@@ -43,6 +44,7 @@ export function AppShell({ profile, children }: AppShellProps) {
 
         {/* Page Content Container */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 min-w-0">
+          <AccessDeniedNotice />
           {children}
         </main>
       </div>

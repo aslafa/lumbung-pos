@@ -42,7 +42,7 @@ export default async function PengaturanPage() {
 
   // Khusus Owner (BR-01 & BR-12)
   if (profile.peran !== "owner") {
-    redirect(profile.peran === "kasir" ? "/kasir" : "/transaksi");
+    redirect(profile.peran === "kasir" ? "/kasir?denied=1" : "/transaksi?denied=1");
   }
 
   const supabase = await createClient();

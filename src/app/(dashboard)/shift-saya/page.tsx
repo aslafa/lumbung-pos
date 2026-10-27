@@ -13,8 +13,8 @@ export default async function ShiftSayaPage() {
   }
 
   // Hanya Kasir yang mengoperasikan Shift Saya (PRD: Owner & Kepala Toko memantau Shift Cabang)
-  if (profile.peran === 'owner' || profile.peran === 'kepala_toko') {
-    redirect('/shift-cabang');
+  if (profile.peran !== 'kasir') {
+    redirect(profile.peran === 'owner' ? '/laporan?denied=1' : '/transaksi?denied=1');
   }
 
   const supabase = await createClient();

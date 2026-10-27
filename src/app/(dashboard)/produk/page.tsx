@@ -14,7 +14,7 @@ export default async function ProdukPage() {
 
   // Kasir dilarang mengakses katalog master produk
   if (profile.peran === 'kasir') {
-    redirect('/kasir');
+    redirect('/kasir?denied=1');
   }
 
   const isOwner = profile.peran === 'owner';

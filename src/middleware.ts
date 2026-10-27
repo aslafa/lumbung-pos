@@ -108,21 +108,36 @@ export async function middleware(request: NextRequest) {
     if (!isAllowed) {
       const url = request.nextUrl.clone();
       url.pathname = '/kasir';
+      url.searchParams.set('denied', '1');
       return NextResponse.redirect(url);
     }
   } else if (role === 'kepala_toko') {
-    // Kepala Toko boleh: /transaksi, /stok, /shift-cabang, /produk, /laporan
+    // Kepala Toko boleh: /transaksi, /stok, /shift-cabang, /produk, /laporan, /meja, /antrean
     // Kepala Toko TIDAK BOLEH: /kasir, /shift-saya, /pengaturan
     const forbidden = ['/kasir', '/shift-saya', '/pengaturan'];
     const isForbidden = forbidden.some((p) => pathname.startsWith(p));
     if (isForbidden) {
       const url = request.nextUrl.clone();
       url.pathname = '/transaksi';
+      url.searchParams.set('denied', '1');
       return NextResponse.redirect(url);
     }
   } else if (role === 'owner') {
-    // Owner memiliki akses ke semua halaman
+    // Owner TIDAK BOLEH mengakses rute operasional kasir: /kasir, /shift-saya
+    const forbidden = ['/kasir', '/shift-saya'];
+    const isForbidden = forbidden.some((p) => pathname.startsWith(p));
+    if (isForbidden) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/laporan';
+      url.searchParams.set('denied', '1');
+      return NextResponse.redirect(url);
+    }
     return supabaseResponse;
+  } else {
+    // Peran tidak valid atau gagal dibaca -> alihkan ke login tanpa hak istimewa
+    const url = request.nextUrl.clone();
+    url.pathname = '/login';
+    return NextResponse.redirect(url);
   }
 
   return supabaseResponse;

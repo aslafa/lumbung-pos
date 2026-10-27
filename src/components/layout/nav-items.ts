@@ -9,9 +9,9 @@ import {
   Settings,
   ChefHat,
   LayoutGrid,
-  LucideIcon,
+  type LucideIcon,
 } from 'lucide-react';
-import { UserRole } from '@/types/database';
+import type { UserRole } from '../../types/database.ts';
 
 export interface NavItem {
   label: string;
@@ -25,7 +25,7 @@ export const ALL_NAV_ITEMS: NavItem[] = [
     label: 'Kasir POS',
     href: '/kasir',
     icon: ShoppingCart,
-    roles: ['kasir', 'owner'],
+    roles: ['kasir'],
   },
   {
     label: 'Denah & Meja',

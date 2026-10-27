@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --env-file=.env.local --experimental-strip-types --test --test-concurrency=1 tests/auth-account-status.test.ts tests/qris-mayar.test.ts tests/format.test.ts tests/order-flow-queue.test.ts tests/meja-management.test.ts tests/capstone-audit-full.test.ts tests/product-customization-and-variants.test.ts",
+    "test": "node --env-file=.env.local --experimental-strip-types --test --test-concurrency=1 tests/auth-account-status.test.ts tests/qris-mayar.test.ts tests/format.test.ts tests/order-flow-queue.test.ts tests/meja-management.test.ts tests/capstone-audit-full.test.ts tests/product-customization-and-variants.test.ts tests/rbac-authorization.test.ts",
     "test:order-flow": "npx tsx --test tests/order-flow-thorough.test.ts"
   },
   "dependencies": {

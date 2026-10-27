@@ -44,7 +44,7 @@ export default async function LaporanPage() {
 
   // Kasir dilarang mengakses laporan
   if (profile.peran === 'kasir') {
-    redirect('/kasir');
+    redirect('/kasir?denied=1');
   }
 
   const isOwner = profile.peran === 'owner';
